@@ -1,0 +1,71 @@
+/* Design tokens — the only place raw colors and sizes are defined. */
+:root {
+  color-scheme: dark;
+
+  --bg: #0c0e11;
+  --bg-sidebar: #0f1114;
+  --surface: #13161a;
+  --surface-raised: #191c21;
+  --surface-hover: #1f2329;
+  --surface-sunken: #0f1216;
+  --line: #262a30;
+  --line-strong: #353a42;
+
+  --text: #edf0f3;
+  --text-soft: #c4cad1;
+  --text-muted: #8a929c;
+  --text-faint: #6a727d;
+
+  --accent: #edba73;
+  --accent-strong: #f6c98a;
+  --accent-ink: #2a2117;
+  --accent-soft: #2a241b;
+  --accent-line: #4a3c29;
+
+  --success: #8cbea2;
+  --success-soft: #1b2a23;
+  --success-line: #2d4337;
+  --progress: #d6b27c;
+  --progress-soft: #2d271d;
+  --progress-line: #4b3d29;
+  --danger: #e89792;
+  --danger-soft: #2b1e1f;
+  --danger-line: #4d2e31;
+  --info: #9fb4d6;
+  --info-soft: #1b2230;
+  --info-line: #2d3a52;
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --fs-2xs: 11px;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 20px;
+  --fs-2xl: 30px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  --sidebar-width: 248px;
+  --sidebar-collapsed: 72px;
+  --topbar-height: 64px;
+  --player-height: 76px;
+
+  --shadow-lg: 0 24px 80px #0009;
+  --ease: 180ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}

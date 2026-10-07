@@ -1,0 +1,11 @@
+EMA Studio
+Copyright 2026 EMA Studio contributors
+
+This product is a community interface for EMA Lightning
+(https://huggingface.co/canberkkkkkk/ema-lightning), created by Canberk Aslan
+and licensed under the Apache License, Version 2.0. EMA Lightning's code and
+weights are not included in this repository; they are installed separately
+through the `ema-lightning` Python package and downloaded from Hugging Face.
+
+Remotion (https://www.remotion.dev) is used for preview and rendering under
+its own license: https://www.remotion.dev/license

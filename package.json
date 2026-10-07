@@ -1,0 +1,55 @@
+{
+  "name": "ema-lightning-studio",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/serkan-uslu/ema-lightning-ui.git"
+  },
+  "homepage": "https://github.com/serkan-uslu/ema-lightning-ui#readme",
+  "bugs": {
+    "url": "https://github.com/serkan-uslu/ema-lightning-ui/issues"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:web": "next dev --hostname 127.0.0.1",
+    "build": "next build",
+    "start": "next start --hostname 127.0.0.1",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test:backend": "uv run --directory backend pytest -q",
+    "check": "npm run typecheck && npm run lint && npm run format:check",
+    "setup:browser": "node scripts/setup-browser.mjs",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "@remotion/bundler": "4.0.534",
+    "@remotion/media": "4.0.534",
+    "@remotion/player": "4.0.534",
+    "@remotion/renderer": "4.0.534",
+    "lucide-react": "^0.468.0",
+    "next": "16.4.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "remotion": "4.0.534"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.0",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.9.9",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  }
+}

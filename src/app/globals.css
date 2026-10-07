@@ -1,0 +1,8 @@
+/* Layered like the component tree: tokens → base → atoms → molecules → shell → views. */
+@import "../styles/tokens.css";
+@import "../styles/base.css";
+@import "../styles/atoms.css";
+@import "../styles/molecules.css";
+@import "../styles/shell.css";
+@import "../styles/views.css";
+@import "../styles/responsive.css";

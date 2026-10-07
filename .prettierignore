@@ -1,0 +1,9 @@
+.next/
+out/
+data/
+.render-bundle/
+node_modules/
+backend/.venv/
+backend/uv.lock
+package-lock.json
+*.tsbuildinfo

@@ -1,0 +1,208 @@
+@media (max-width: 1400px) {
+  .montage-grid {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-areas:
+      "preview inspector"
+      "library inspector"
+      "timeline timeline";
+  }
+  .media-library {
+    max-height: none;
+  }
+}
+@media (max-width: 1180px) {
+  .studio-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .inspector {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    align-items: start;
+  }
+  .has-player .inspector {
+    max-height: none;
+  }
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .player-bar {
+    grid-template-columns: minmax(0, 1fr) auto minmax(180px, 1.4fr);
+  }
+  .player-extra .volume-range {
+    display: none;
+  }
+  .player-extra {
+    display: none;
+  }
+}
+@media (max-width: 960px) {
+  .about-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .main-shell {
+    margin-left: 0;
+  }
+  .sidebar {
+    width: min(300px, 86vw);
+    transform: translateX(-100%);
+    transition: transform var(--ease);
+    box-shadow: var(--shadow-lg);
+  }
+  .sidebar.is-open {
+    transform: none;
+  }
+  /* The drawer always shows labels, even if desktop is collapsed. */
+  .sidebar.is-collapsed .brand-text,
+  .sidebar.is-collapsed .nav-label,
+  .sidebar.is-collapsed .sidebar-label,
+  .sidebar.is-collapsed .engine-card p,
+  .sidebar.is-collapsed .engine-card small,
+  .sidebar.is-collapsed .engine-head strong {
+    display: revert;
+  }
+  .sidebar.is-collapsed .sidebar-recent {
+    display: flex;
+  }
+  .sidebar.is-collapsed .nav-item {
+    justify-content: flex-start;
+    padding: 0 14px;
+  }
+  .sidebar.is-collapsed .engine-card {
+    display: block;
+    padding: var(--space-3);
+  }
+  .sidebar.is-collapsed .brand {
+    margin: 0;
+  }
+  .sidebar-toggle {
+    display: none;
+  }
+  .sidebar-close,
+  .topbar-menu {
+    display: inline-flex;
+  }
+  .sidebar-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    background: #000a;
+  }
+  .player-bar {
+    left: 0;
+  }
+  .topbar,
+  main,
+  .page-footer {
+    padding-left: var(--space-5);
+    padding-right: var(--space-5);
+  }
+  .connection-tag span {
+    display: none;
+  }
+  .hero {
+    grid-template-columns: 1fr;
+  }
+  .hero-art {
+    display: none;
+  }
+  .montage-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "preview"
+      "library"
+      "inspector"
+      "timeline";
+  }
+  .montage-inspector {
+    position: static;
+    max-height: none;
+  }
+  .preview-canvas.is-portrait {
+    height: 60vh;
+  }
+}
+@media (max-width: 720px) {
+  :root {
+    --player-height: 132px;
+  }
+  h1,
+  .title-input {
+    font-size: 24px;
+  }
+  .hide-sm,
+  .crumb-root {
+    display: none;
+  }
+  .stats,
+  .steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .project-table-head {
+    display: none;
+  }
+  .project-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: var(--space-3) var(--space-4);
+  }
+  .project-row > .progress-cell,
+  .project-row > .mono,
+  .project-row > .muted {
+    display: none;
+  }
+  .hero-copy {
+    padding: var(--space-6);
+  }
+  .hero h2 {
+    font-size: 32px;
+  }
+  .player-bar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "info transport"
+      "timeline timeline";
+    align-content: center;
+    row-gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+  }
+  .player-info {
+    grid-area: info;
+  }
+  .player-transport {
+    grid-area: transport;
+  }
+  .player-timeline {
+    grid-area: timeline;
+  }
+  .paragraph-card {
+    padding: var(--space-4);
+  }
+  .editor-toolbar {
+    flex-wrap: wrap;
+    position: static;
+  }
+  .waveform {
+    gap: 1px;
+  }
+  .take-rate {
+    display: none;
+  }
+  .page-footer {
+    flex-direction: column;
+  }
+  .modal {
+    padding: var(--space-5);
+  }
+  .montage-card {
+    flex-wrap: wrap;
+  }
+  .montage-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .about-hero {
+    flex-direction: column;
+  }
+}

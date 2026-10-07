@@ -1,0 +1,11 @@
+[project]
+name = "ema-studio-backend"
+version = "0.1.0"
+requires-python = ">=3.11,<3.14"
+dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.34,<1", "python-multipart>=0.0.20", "ema-lightning==1.0.1", "pillow>=11,<13", "scipy>=1.14,<2"]
+[dependency-groups]
+dev = ["pytest>=8,<10", "httpx>=0.28,<1", "ruff>=0.9,<1"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
