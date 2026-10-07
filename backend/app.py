@@ -170,9 +170,27 @@ def project_view(pid):
                 ),
                 None,
             )
+            # Jobs are newest first: surface a failed/interrupted generation
+            # until a newer take exists for the paragraph.
+            latest = next(
+                (j for j in jobs if j.get("paragraph_id") == paragraph["id"]), None
+            )
+            newest_take = max(
+                (t["created_at"] for t in paragraph["takes"]), default=""
+            )
+            failed = (
+                latest
+                if latest
+                and latest["status"] in ["failed", "interrupted"]
+                and latest["created_at"] > newest_take
+                else None
+            )
+            paragraph["error"] = failed.get("error") if failed else None
             paragraph["status"] = (
                 active["status"]
                 if active
+                else failed["status"]
+                if failed
                 else ("stale" if paragraph["stale"] else "ready" if chosen else "empty")
             )
         project.update(assets=assets, jobs=jobs, all_takes=takes)
@@ -232,7 +250,8 @@ class Clip(BaseModel):
     label: str = Field(max_length=160)
     start: float = Field(ge=0, le=7200, allow_inf_nan=False)
     trim: float = Field(default=0, ge=0, allow_inf_nan=False)
-    duration: float = Field(gt=0, le=7200, allow_inf_nan=False)
+    # At least one 30 fps frame, so preview/render never get an empty range.
+    duration: float = Field(ge=1 / 30, le=7200, allow_inf_nan=False)
     volume: float = Field(default=1, ge=0, le=2, allow_inf_nan=False)
     fit: Literal["cover", "contain"] = "cover"
 
@@ -458,18 +477,43 @@ def render(job):
             proc.wait(timeout=10)
 
 
+def load_model():
+    MODEL.update(status="loading", error=None)
+    from ema_lightning import EMA
+    import torch
+
+    torch.set_num_threads(min(8, os.cpu_count() or 4))
+    tts = EMA(device=MODEL["device"])
+    MODEL.update(status="ready", error=None)
+    return tts
+
+
+def next_job(model_ready):
+    """Oldest queued job this worker can run now.
+
+    Render jobs never need the model, so a failed model load must not block them.
+    """
+    kinds = "('tts','render')" if model_ready else "('render')"
+    row = query(
+        f"SELECT data FROM jobs WHERE status='queued' AND kind IN {kinds} "
+        "ORDER BY created_at LIMIT 1",
+        one=True,
+    )
+    return json.loads(row["data"]) if row else None
+
+
 def work():
     tts = None
+    retry_model_at = 0.0
     while not STOP.is_set():
+        if tts is None and time.monotonic() >= retry_model_at:
+            try:
+                tts = load_model()
+            except Exception as exc:
+                LOG.exception("Model load failed")
+                MODEL.update(status="error", error=str(exc)[:1000])
+                retry_model_at = time.monotonic() + 10
         try:
-            if tts is None:
-                MODEL.update(status="loading", error=None)
-                from ema_lightning import EMA
-                import torch
-
-                torch.set_num_threads(min(8, os.cpu_count() or 4))
-                tts = EMA(device=MODEL["device"])
-                MODEL.update(status="ready", error=None)
             if (
                 query("SELECT value FROM settings WHERE key='paused'", one=True)[
                     "value"
@@ -479,14 +523,10 @@ def work():
                 STOP.wait(0.3)
                 continue
             with LOCK:
-                row = query(
-                    "SELECT data FROM jobs WHERE status='queued' ORDER BY created_at LIMIT 1",
-                    one=True,
-                )
-                if row:
-                    job = json.loads(row["data"])
+                job = next_job(tts is not None)
+                if job:
                     update_job(job, status="running", started_at=now())
-            if not row:
+            if not job:
                 STOP.wait(0.3)
                 continue
             try:
@@ -499,10 +539,9 @@ def work():
                 update_job(
                     job, status="failed", error=str(exc)[:3000], finished_at=now()
                 )
-        except Exception as exc:
-            LOG.exception("Model load failed")
-            MODEL.update(status="error", error=str(exc)[:1000])
-            STOP.wait(10)
+        except Exception:
+            LOG.exception("Worker loop failed")
+            STOP.wait(1)
 
 
 @contextlib.asynccontextmanager
@@ -864,6 +903,9 @@ def upload(pid: str, file: UploadFile = File(...)):
         else:
             with Image.open(path) as img:
                 img.verify()
+            # verify() misses truncated data; a full decode catches it.
+            with Image.open(path) as img:
+                img.load()
                 width, height = img.size
             kind = "image"
             duration = 5
@@ -885,7 +927,14 @@ def upload(pid: str, file: UploadFile = File(...)):
     except HTTPException:
         path.unlink(missing_ok=True)
         raise
-    except (UnidentifiedImageError, ValueError, subprocess.TimeoutExpired) as e:
+    except (
+        UnidentifiedImageError,
+        Image.DecompressionBombError,
+        ValueError,
+        OSError,
+        SyntaxError,
+        subprocess.TimeoutExpired,
+    ) as e:
         path.unlink(missing_ok=True)
         raise HTTPException(400, "Medya dosyası geçersiz veya okunamadı.") from e
 

@@ -49,7 +49,7 @@ export function TimelineEditor({ editor }: { editor: MontageEditor }) {
     else if (e.key === "ArrowRight")
       editor.moveClip(clip.id, clip.start + step);
     else if (e.key === "Delete" || e.key === "Backspace")
-      editor.removeSelected();
+      editor.removeClip(clip.id);
     else return;
     e.preventDefault();
   };
@@ -82,7 +82,7 @@ export function TimelineEditor({ editor }: { editor: MontageEditor }) {
           <span className="toolbar-divider" aria-hidden="true" />
           <IconButton
             label={m.split}
-            disabled={!editor.selected}
+            disabled={!editor.canSplit}
             onClick={editor.split}
           >
             <Scissors size={17} />
@@ -149,6 +149,7 @@ export function TimelineEditor({ editor }: { editor: MontageEditor }) {
                         editor.select(clip.id);
                       }}
                       onKeyDown={onClipKey(clip)}
+                      onFocus={() => editor.focusClip(clip.id)}
                       className={`timeline-clip clip-${clip.kind} ${editor.selected?.id === clip.id ? "is-selected" : ""} ${clip.src ? "" : "is-missing"}`}
                       style={{
                         left: clip.start * pps,

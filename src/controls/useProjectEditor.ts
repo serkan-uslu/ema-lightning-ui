@@ -1,10 +1,11 @@
 "use client";
-import { useCallback, useRef, useState } from "react";
+import { useState } from "react";
 import { selectedTake, splitParagraphs, readUtf8TextFile } from "@/lib/project";
 import type { Project } from "@/lib/types";
 import { downloadFile } from "@/services/http";
 import { paragraphService, type ParagraphPatch } from "@/services/paragraphs";
 import { projectService, type ProjectPatch } from "@/services/projects";
+import { useDrafts } from "./DraftsProvider";
 import { useI18n } from "./I18nProvider";
 import { useStudioData } from "./StudioDataProvider";
 
@@ -15,19 +16,13 @@ export function useProjectEditor(project: Project) {
   const pid = project.id;
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [checked, setChecked] = useState<string[]>([]);
-  const [drafts, setDraftState] = useState<Record<string, string>>({});
-  // Mirror of `drafts` for async flushes that outlive a render.
-  const draftRef = useRef<Record<string, string>>({});
+  const {
+    texts: drafts,
+    textsRef: draftRef,
+    updateTexts: updateDrafts,
+  } = useDrafts();
   const [gap, setGap] = useState(0.35);
   const [exportRate, setExportRate] = useState(48000);
-
-  const updateDrafts = useCallback(
-    (fn: (d: Record<string, string>) => Record<string, string>) => {
-      draftRef.current = fn(draftRef.current);
-      setDraftState(draftRef.current);
-    },
-    [],
-  );
 
   const textOf = (id: string) =>
     drafts[id] ?? project.paragraphs.find((p) => p.id === id)?.text ?? "";
@@ -126,6 +121,12 @@ export function useProjectEditor(project: Project) {
       }),
     remove: (id: string) => {
       setChecked((ids) => ids.filter((x) => x !== id));
+      updateDrafts((d) => {
+        if (!(id in d)) return d;
+        const next = { ...d };
+        delete next[id];
+        return next;
+      });
       if (focusedId === id) setFocusedId(null);
       return run(() => paragraphService.remove(pid, id));
     },

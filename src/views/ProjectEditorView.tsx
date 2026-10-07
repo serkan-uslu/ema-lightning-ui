@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Headphones, Plus, RotateCcw, Save, Upload, Zap } from "lucide-react";
 import { useAudioPlayer } from "@/controls/AudioPlayerProvider";
+import { useDrafts } from "@/controls/DraftsProvider";
 import { useI18n } from "@/controls/I18nProvider";
 import { useProject } from "@/controls/StudioDataProvider";
 import { useProjectEditor } from "@/controls/useProjectEditor";
@@ -49,6 +50,7 @@ function Editor({ project }: { project: Project }) {
   const player = useAudioPlayer();
   const [name, setName] = useState<string | null>(null);
   const playlist = selectedTakes(project);
+  const montageDraft = useDrafts().montage[project.id];
   const e = t.editor;
 
   return (
@@ -57,7 +59,8 @@ function Editor({ project }: { project: Project }) {
         projectId={project.id}
         active="audio"
         labels={t.projectTabs}
-        clipCount={project.timeline.clips.length}
+        clipCount={(montageDraft ?? project.timeline).clips.length}
+        unsaved={montageDraft ? t.montage.unsaved : undefined}
       />
       <PageHeading
         eyebrow={e.eyebrow}

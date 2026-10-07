@@ -13,9 +13,10 @@ import { useShell } from "@/controls/ShellProvider";
 import { useStudioData } from "@/controls/StudioDataProvider";
 import { formatClock } from "@/lib/format";
 import { projectStats } from "@/lib/project";
-import { Button } from "@/components/atoms";
+import { Button, ButtonLink } from "@/components/atoms";
 import {
   EmptyState,
+  Notice,
   PageHeading,
   SectionHeading,
   StatCard,
@@ -33,10 +34,22 @@ export function DashboardView() {
   const paragraphs = stats.reduce((n, s) => n + s.total, 0);
   const ready = stats.reduce((n, s) => n + s.ready, 0);
   const audio = stats.reduce((n, s) => n + s.duration, 0);
+  const failed = stats.reduce((n, s) => n + s.failed, 0);
 
   return (
     <RequireData>
       <PageHeading eyebrow={d.eyebrow} title={d.title} lead={d.lead} />
+      {failed > 0 && (
+        <Notice
+          action={
+            <ButtonLink size="sm" href="/queue">
+              {d.openQueue}
+            </ButtonLink>
+          }
+        >
+          {d.failedNotice(failed)}
+        </Notice>
+      )}
       <DashboardHero onStart={openNewProject} />
       <div className="stats">
         <StatCard

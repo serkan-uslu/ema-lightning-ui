@@ -60,16 +60,19 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 }
 
-/** Shows a loader until the first sync and hides data views while offline. */
+/**
+ * Shows a loader until the first sync. Once data has arrived, views stay
+ * mounted while offline so unsaved edits and scroll position survive.
+ */
 export function RequireData({ children }: { children: ReactNode }) {
   const { t } = useI18n();
-  const { loaded, connected } = useStudioData();
-  if (!loaded)
+  const { loaded, hasData } = useStudioData();
+  if (!loaded && !hasData)
     return (
       <div className="loading">
         <Spinner size={24} />
         <span>{t.common.loading}</span>
       </div>
     );
-  return connected ? <>{children}</> : null;
+  return hasData ? <>{children}</> : null;
 }

@@ -14,6 +14,7 @@ import {
 } from "@/controls/AudioPlayerProvider";
 import { useI18n } from "@/controls/I18nProvider";
 import type { ProjectEditor } from "@/controls/useProjectEditor";
+import { translateBackend } from "@/i18n";
 import { formatNumber } from "@/lib/format";
 import { isActiveStatus, selectedTake, SPEED_PRESETS } from "@/lib/project";
 import type { Paragraph, Take } from "@/lib/types";
@@ -206,6 +207,11 @@ export function ParagraphCard({
         />
       )}
       {paragraph.stale && <p className="stale-note">{t.editor.stale}</p>}
+      {paragraph.error && !working && (
+        <p className="error-text" role="status">
+          {t.editor.failed} {translateBackend(paragraph.error, t)}
+        </p>
+      )}
     </article>
   );
 }

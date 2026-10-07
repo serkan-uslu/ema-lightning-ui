@@ -21,6 +21,9 @@ export const selectedTakes = (project: Project): Take[] =>
 
 export function projectStats(project: Project) {
   const ready = project.paragraphs.filter((p) => p.status === "ready").length;
+  const failed = project.paragraphs.filter((p) =>
+    ["failed", "interrupted"].includes(p.status),
+  ).length;
   const duration = project.paragraphs.reduce(
     (sum, p) => sum + (selectedTake(p)?.duration || 0),
     0,
@@ -32,6 +35,7 @@ export function projectStats(project: Project) {
   const renders = project.jobs.filter((j) => j.kind === "render");
   return {
     ready,
+    failed,
     total: project.paragraphs.length,
     duration,
     clips: project.timeline.clips.length,

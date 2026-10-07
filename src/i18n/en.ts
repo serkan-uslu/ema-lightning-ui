@@ -160,6 +160,9 @@ const en: Dictionary = {
       jobsCaption: "Speech + render queue",
       paused: "Queue is paused",
     },
+    failedNotice: (n) =>
+      `The last generation of ${n} paragraph${n === 1 ? "" : "s"} failed or was interrupted.`,
+    openQueue: "Open queue",
     recent: "Recent projects",
     recentLead: "Pick up where you left off.",
     seeAll: "See all",
@@ -235,6 +238,7 @@ const en: Dictionary = {
     regenerate: "Regenerate",
     stale:
       "Text or settings changed. This audio belongs to an earlier generation.",
+    failed: "The last generation did not finish:",
     nowPlaying: "Playing",
     addParagraph: "Add paragraph",
     importTxt: "Import TXT",
@@ -382,7 +386,6 @@ const en: Dictionary = {
       "A render uses the montage as it was when started. Later edits do not affect it.",
     pickTitle: "Pick a project first",
     pickText: "A montage is saved as part of a speech project.",
-    leaveWarning: "There are unsaved montage changes.",
   },
   queue: {
     eyebrow: "BACKGROUND JOBS",

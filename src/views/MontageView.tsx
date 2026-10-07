@@ -49,6 +49,7 @@ function Montage({ project }: { project: Project }) {
         active="montage"
         labels={t.projectTabs}
         clipCount={editor.clips.length}
+        unsaved={editor.dirty ? m.unsaved : undefined}
       />
       <PageHeading
         eyebrow={m.eyebrow}
@@ -61,10 +62,8 @@ function Montage({ project }: { project: Project }) {
                 className="project-switch"
                 aria-label={m.switchProject}
                 value={project.id}
-                onChange={(e) => {
-                  if (!editor.dirty || window.confirm(m.leaveWarning))
-                    router.push(`/montage/${e.target.value}`);
-                }}
+                // Unsaved edits stay in DraftsProvider, so switching is safe.
+                onChange={(e) => router.push(`/montage/${e.target.value}`)}
               >
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>

@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { ArrowRight, Clapperboard, Plus } from "lucide-react";
+import { useDrafts } from "@/controls/DraftsProvider";
 import { useI18n } from "@/controls/I18nProvider";
 import { useShell } from "@/controls/ShellProvider";
 import { useStudioData } from "@/controls/StudioDataProvider";
@@ -15,6 +16,7 @@ export function MontageIndexView() {
   const { t } = useI18n();
   const { projects } = useStudioData();
   const { openNewProject } = useShell();
+  const { montage: drafts } = useDrafts();
   const mi = t.montageIndex;
   return (
     <RequireData>
@@ -35,7 +37,12 @@ export function MontageIndexView() {
                   <Clapperboard size={22} />
                 </span>
                 <div className="montage-card-body">
-                  <strong>{project.name}</strong>
+                  <strong>
+                    {project.name}
+                    {drafts[project.id] && (
+                      <span className="unsaved">{t.montage.unsaved}</span>
+                    )}
+                  </strong>
                   <small>
                     {s.clips
                       ? `${mi.clips(s.clips)} · ${formatClock(s.timelineEnd)}`

@@ -3,8 +3,21 @@ import { AbsoluteFill, CanvasImage, Sequence, Composition } from "remotion";
 import { Audio, Video } from "@remotion/media";
 import type { Aspect, Clip } from "../lib/types";
 export type MovieProps = { aspect: Aspect; clips: Clip[] };
+
+const FPS = 30;
+const frames = (seconds: number) => Math.round(seconds * FPS);
+/** Clip timing in frames; every range is at least one frame long. */
+const timing = (c: Clip) => {
+  const trimBefore = frames(c.trim);
+  return {
+    from: frames(c.start),
+    durationInFrames: Math.max(1, frames(c.duration)),
+    trimBefore,
+    trimAfter: Math.max(trimBefore + 1, frames(c.trim + c.duration)),
+  };
+};
 export const movieFrames = (clips: Clip[]) =>
-  Math.max(1, ...clips.map((c) => Math.round((c.start + c.duration) * 30)));
+  Math.max(1, ...clips.map((c) => timing(c).from + timing(c).durationInFrames));
 export const Movie = ({ clips }: MovieProps) => (
   <AbsoluteFill style={{ backgroundColor: "#101113" }}>
     {clips
@@ -12,8 +25,8 @@ export const Movie = ({ clips }: MovieProps) => (
       .map((c) => (
         <Sequence
           key={c.id}
-          from={Math.round(c.start * 30)}
-          durationInFrames={Math.max(1, Math.round(c.duration * 30))}
+          from={timing(c).from}
+          durationInFrames={timing(c).durationInFrames}
         >
           {c.kind === "image" ? (
             <CanvasImage
@@ -23,8 +36,8 @@ export const Movie = ({ clips }: MovieProps) => (
           ) : (
             <Video
               src={c.src!}
-              trimBefore={Math.round(c.trim * 30)}
-              trimAfter={Math.round((c.trim + c.duration) * 30)}
+              trimBefore={timing(c).trimBefore}
+              trimAfter={timing(c).trimAfter}
               volume={c.volume}
               style={{ width: "100%", height: "100%", objectFit: c.fit }}
             />
@@ -36,13 +49,13 @@ export const Movie = ({ clips }: MovieProps) => (
       .map((c) => (
         <Sequence
           key={c.id}
-          from={Math.round(c.start * 30)}
-          durationInFrames={Math.max(1, Math.round(c.duration * 30))}
+          from={timing(c).from}
+          durationInFrames={timing(c).durationInFrames}
         >
           <Audio
             src={c.src!}
-            trimBefore={Math.round(c.trim * 30)}
-            trimAfter={Math.round((c.trim + c.duration) * 30)}
+            trimBefore={timing(c).trimBefore}
+            trimAfter={timing(c).trimAfter}
             volume={c.volume}
           />
         </Sequence>

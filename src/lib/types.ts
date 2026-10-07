@@ -44,6 +44,8 @@ export type Paragraph = {
   takes: Take[];
   stale: boolean;
   status: ParagraphStatus | string;
+  /** Error of the latest failed/interrupted generation, if no newer take. */
+  error?: string | null;
 };
 
 export type Asset = {

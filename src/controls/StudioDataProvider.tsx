@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import type { ReactNode } from "react";
@@ -16,6 +17,8 @@ import { projectService } from "@/services/projects";
 import { useI18n } from "./I18nProvider";
 
 const POLL_MS = 2000;
+/** Consecutive failed polls before the UI reports the service as offline. */
+const OFFLINE_AFTER = 2;
 
 export type Run = (action: () => Promise<unknown>) => Promise<boolean>;
 
@@ -26,6 +29,8 @@ type StudioData = {
   health: Health | null;
   loaded: boolean;
   connected: boolean;
+  /** True once any data arrived; views keep showing it while offline. */
+  hasData: boolean;
   busy: boolean;
   error: string;
   clearError: () => void;
@@ -43,6 +48,8 @@ export function StudioDataProvider({ children }: { children: ReactNode }) {
   const [health, setHealth] = useState<Health | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [connected, setConnected] = useState(false);
+  const [hasData, setHasData] = useState(false);
+  const failures = useRef(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -57,8 +64,12 @@ export function StudioDataProvider({ children }: { children: ReactNode }) {
       setJobs(j);
       setHealth(h);
       setConnected(true);
+      setHasData(true);
+      failures.current = 0;
     } catch {
-      setConnected(false);
+      // A single dropped poll must not tear down editors.
+      failures.current += 1;
+      if (failures.current >= OFFLINE_AFTER) setConnected(false);
     } finally {
       setLoaded(true);
     }
@@ -103,13 +114,25 @@ export function StudioDataProvider({ children }: { children: ReactNode }) {
       health,
       loaded,
       connected,
+      hasData,
       busy,
       error,
       clearError: () => setError(""),
       refresh,
       run,
     }),
-    [projects, jobs, health, loaded, connected, busy, error, refresh, run],
+    [
+      projects,
+      jobs,
+      health,
+      loaded,
+      connected,
+      hasData,
+      busy,
+      error,
+      refresh,
+      run,
+    ],
   );
   return (
     <StudioDataContext.Provider value={value}>

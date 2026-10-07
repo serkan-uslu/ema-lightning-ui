@@ -5,10 +5,14 @@ import { FPS, selectedTakes } from "@/lib/project";
 import type { Asset, Clip, Project, Take, Timeline } from "@/lib/types";
 import { projectService } from "@/services/projects";
 import { useAudioPlayer } from "./AudioPlayerProvider";
+import { useDrafts } from "./DraftsProvider";
 import { useStudioData } from "./StudioDataProvider";
 
 export const ZOOM_LEVELS = [24, 48, 96, 192] as const; // px per second
 const MIN_TIMELINE_SECONDS = 5;
+/** Shortest clip: one frame. The backend enforces the same limit. */
+export const MIN_CLIP_SECONDS = 1 / FPS;
+const toFrame = (seconds: number) => Math.round(seconds * FPS) / FPS;
 
 const isAudioLane = (kind: Clip["kind"]) => kind === "audio";
 
@@ -18,8 +22,9 @@ export function useMontageEditor(project: Project) {
   const { pause: pauseAudio, playing: audioPlaying } = useAudioPlayer();
   const pid = project.id;
   const playerRef = useRef<PlayerRef>(null);
-  // Local edits; `null` means "showing the saved timeline".
-  const [draft, setDraft] = useState<Timeline | null>(null);
+  // Unsaved edits are kept in DraftsProvider; `null` = showing the saved timeline.
+  const { montage, setMontage } = useDrafts();
+  const draft = montage[pid] ?? null;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [frame, setFrame] = useState(0);
   const [zoomIndex, setZoomIndex] = useState(1);
@@ -62,22 +67,22 @@ export function useMontageEditor(project: Project) {
     if (audioPlaying) playerRef.current?.pause();
   }, [audioPlaying]);
 
-  useEffect(() => {
-    if (!dirty) return;
-    const listener = (e: BeforeUnloadEvent) => e.preventDefault();
-    window.addEventListener("beforeunload", listener);
-    return () => window.removeEventListener("beforeunload", listener);
-  }, [dirty]);
+  const change = useCallback(
+    (next: Timeline) => setMontage(pid, next),
+    [pid, setMontage],
+  );
 
-  const change = useCallback((next: Timeline) => setDraft(next), []);
-
-  const patchSelected = (values: Partial<Clip>) =>
+  const patchSelected = (values: Partial<Clip>) => {
+    const next = { ...values };
+    if (next.duration !== undefined)
+      next.duration = Math.max(MIN_CLIP_SECONDS, next.duration);
     change({
       ...timeline,
       clips: timeline.clips.map((c) =>
-        c.id === selectedId ? { ...c, ...values } : c,
+        c.id === selectedId ? { ...c, ...next } : c,
       ),
     });
+  };
 
   const append = (items: (Take | Asset)[]) => {
     const next = [...timeline.clips];
@@ -129,11 +134,17 @@ export function useMontageEditor(project: Project) {
       ),
     });
 
+  // Both halves must be at least one frame long.
+  const canSplit = !!selected && selected.duration >= 2 * MIN_CLIP_SECONDS;
   const split = () => {
-    if (!selected) return;
+    if (!selected || !canSplit) return;
     let at = frame / FPS - selected.start;
-    if (at <= 0.04 || at >= selected.duration - 0.04)
+    if (at < MIN_CLIP_SECONDS || at > selected.duration - MIN_CLIP_SECONDS)
       at = selected.duration / 2;
+    at = Math.min(
+      selected.duration - MIN_CLIP_SECONDS,
+      Math.max(MIN_CLIP_SECONDS, toFrame(at)),
+    );
     const second: Clip = {
       ...selected,
       id: crypto.randomUUID(),
@@ -150,24 +161,23 @@ export function useMontageEditor(project: Project) {
     setSelectedId(second.id);
   };
 
-  const removeSelected = () => {
-    change({
-      ...timeline,
-      clips: timeline.clips.filter((c) => c.id !== selectedId),
-    });
-    setSelectedId(null);
+  const removeClip = (id: string) => {
+    change({ ...timeline, clips: timeline.clips.filter((c) => c.id !== id) });
+    if (selectedId === id) setSelectedId(null);
   };
 
-  const save = () =>
-    run(async () => {
-      await projectService.saveTimeline(pid, timeline);
-      setDraft(null);
-    });
+  // Clear the draft only if nothing changed while the request was in flight.
+  const persist = async () => {
+    const saving = timeline;
+    await projectService.saveTimeline(pid, saving);
+    setMontage(pid, (current) => (current === saving ? null : current));
+  };
+
+  const save = () => run(persist);
 
   const render = () =>
     run(async () => {
-      await projectService.saveTimeline(pid, timeline);
-      setDraft(null);
+      await persist();
       await projectService.render(pid);
     });
 
@@ -199,13 +209,17 @@ export function useMontageEditor(project: Project) {
     selectedSource,
     overflow,
     select,
+    /** Keyboard focus selects a clip without moving the playhead. */
+    focusClip: setSelectedId,
     seekSeconds,
     setAspect: (aspect: Timeline["aspect"]) => change({ ...timeline, aspect }),
     patchSelected,
     append,
     moveClip,
     split,
-    removeSelected,
+    canSplit,
+    removeClip,
+    removeSelected: () => selectedId && removeClip(selectedId),
     save,
     render,
     upload: (file: File) => run(() => projectService.uploadAsset(pid, file)),

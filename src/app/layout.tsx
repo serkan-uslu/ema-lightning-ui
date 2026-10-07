@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/templates/AppShell";
 import { AudioPlayerProvider } from "@/controls/AudioPlayerProvider";
+import { DraftsProvider } from "@/controls/DraftsProvider";
 import { I18nProvider } from "@/controls/I18nProvider";
 import { ShellProvider } from "@/controls/ShellProvider";
 import { StudioDataProvider } from "@/controls/StudioDataProvider";
@@ -37,9 +38,11 @@ export default async function RootLayout({
         <I18nProvider initialLocale={locale}>
           <ShellProvider initialCollapsed={collapsed}>
             <StudioDataProvider>
-              <AudioPlayerProvider>
-                <AppShell>{children}</AppShell>
-              </AudioPlayerProvider>
+              <DraftsProvider>
+                <AudioPlayerProvider>
+                  <AppShell>{children}</AppShell>
+                </AudioPlayerProvider>
+              </DraftsProvider>
             </StudioDataProvider>
           </ShellProvider>
         </I18nProvider>

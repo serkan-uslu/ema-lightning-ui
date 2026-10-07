@@ -298,3 +298,93 @@ def test_deleted_paragraph_retains_audio_for_saved_montage(client):
     assert r.status_code == 200 and r.json()["composition"]["clips"][0]["src"].endswith(
         take + ".wav"
     )
+
+
+def png_bytes():
+    from PIL import Image
+
+    buf = io.BytesIO()
+    Image.new("RGB", (64, 64), (200, 150, 90)).save(buf, "PNG")
+    return buf.getvalue()
+
+
+def test_truncated_and_corrupt_png_are_rejected_and_cleaned(client):
+    p = project(client)
+    good = png_bytes()
+    corrupt_crc = bytearray(good)
+    corrupt_crc[good.index(b"IDAT") + 6] ^= 0xFF  # image data no longer matches its CRC
+    for body in (good[: len(good) // 2], bytes(corrupt_crc)):
+        r = client.post(
+            f"/api/projects/{p['id']}/assets",
+            files={"file": ("bad.png", body, "image/png")},
+        )
+        assert r.status_code == 400
+        assert r.json()["detail"] == "Medya dosyası geçersiz veya okunamadı."
+    assert not list((app.DATA / "media").iterdir())
+    ok = client.post(
+        f"/api/projects/{p['id']}/assets",
+        files={"file": ("ok.png", good, "image/png")},
+    )
+    assert ok.status_code == 200 and ok.json()["width"] == 64
+
+
+def test_clip_shorter_than_one_frame_is_rejected(client):
+    p = project(client)
+    asset = client.post(
+        f"/api/projects/{p['id']}/assets",
+        files={"file": ("ok.png", png_bytes(), "image/png")},
+    ).json()
+    clip = {
+        "id": "a",
+        "source_id": asset["id"],
+        "kind": "image",
+        "label": "Görsel",
+        "start": 0,
+        "duration": 0.015625,
+    }
+    url = f"/api/projects/{p['id']}/timeline"
+    assert client.put(url, json={"clips": [clip]}).status_code == 422
+    clip["duration"] = 1 / 30
+    assert client.put(url, json={"clips": [clip]}).status_code == 200
+
+
+def test_failed_generation_is_visible_until_a_newer_take(client):
+    p = project(client, "Merhaba.")
+    job = generate(client, p)[0]
+    app.update_job(job, status="failed", error="Model hatası")
+    paragraph = fetch(client, p)["paragraphs"][0]
+    assert paragraph["status"] == "failed" and paragraph["error"] == "Model hatası"
+    assert client.post(f"/api/jobs/{job['id']}/retry").status_code == 200
+    assert fetch(client, p)["paragraphs"][0]["status"] == "queued"
+    finish([app.job_by_id(job["id"])])
+    paragraph = fetch(client, p)["paragraphs"][0]
+    assert paragraph["status"] == "ready" and paragraph["error"] is None
+
+
+def test_render_jobs_do_not_wait_for_the_model(client):
+    p = project(client, "Merhaba.")
+    tts_job = generate(client, p)[0]
+    render_job = {
+        "id": "render-1",
+        "project_id": p["id"],
+        "kind": "render",
+        "status": "queued",
+        "created_at": app.now(),
+        "progress": 0,
+        "error": None,
+        "label": "Test — MP4",
+    }
+    app.query(
+        "INSERT INTO jobs VALUES(?,?,?,?,?,?)",
+        (
+            render_job["id"],
+            p["id"],
+            "render",
+            "queued",
+            render_job["created_at"],
+            app.json.dumps(render_job),
+        ),
+    )
+    # Model unavailable: the older TTS job is skipped, the render job runs.
+    assert app.next_job(model_ready=False)["id"] == "render-1"
+    assert app.next_job(model_ready=True)["id"] == tts_job["id"]

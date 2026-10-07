@@ -7,11 +7,14 @@ export function ProjectTabs({
   active,
   labels,
   clipCount,
+  unsaved,
 }: {
   projectId: string;
   active: "audio" | "montage";
   labels: { audio: string; montage: string };
   clipCount?: number;
+  /** Label shown when the montage has unsaved edits. */
+  unsaved?: string;
 }) {
   return (
     <nav
@@ -34,6 +37,9 @@ export function ProjectTabs({
         <Clapperboard size={16} aria-hidden="true" />
         {labels.montage}
         {!!clipCount && <span className="tab-count">{clipCount}</span>}
+        {unsaved && (
+          <span className="unsaved-dot" title={unsaved} aria-label={unsaved} />
+        )}
       </Link>
     </nav>
   );

@@ -98,6 +98,9 @@ const tr = {
       jobsCaption: "Üretim + render kuyruğu",
       paused: "Kuyruk duraklatıldı",
     },
+    failedNotice: (n: number) =>
+      `${n} paragrafın son üretimi başarısız oldu veya kesildi.`,
+    openQueue: "Kuyruğu aç",
     recent: "Son projeler",
     recentLead: "Kaldığın yerden devam et.",
     seeAll: "Tümünü gör",
@@ -170,6 +173,7 @@ const tr = {
     generate: "Ses üret",
     regenerate: "Yeniden üret",
     stale: "Metin veya ayarlar değişti. Bu ses önceki üretime ait.",
+    failed: "Son üretim tamamlanamadı:",
     nowPlaying: "Çalıyor",
     addParagraph: "Paragraf ekle",
     importTxt: "TXT içe aktar",
@@ -316,7 +320,6 @@ const tr = {
       "Render, başlatıldığı andaki montajı kullanır. Sonraki değişiklikler devam eden renderı etkilemez.",
     pickTitle: "Önce bir proje seç",
     pickText: "Montaj, ses üretim projesine bağlı olarak kaydedilir.",
-    leaveWarning: "Kaydedilmemiş montaj değişiklikleri var.",
   },
   queue: {
     eyebrow: "ARKA PLAN İŞLERİ",
