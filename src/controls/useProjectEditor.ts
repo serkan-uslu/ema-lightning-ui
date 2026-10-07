@@ -6,6 +6,7 @@ import { downloadFile } from "@/services/http";
 import { paragraphService, type ParagraphPatch } from "@/services/paragraphs";
 import { projectService, type ProjectPatch } from "@/services/projects";
 import { useDrafts } from "./DraftsProvider";
+import { useDeletion } from "./DeletionProvider";
 import { useI18n } from "./I18nProvider";
 import { useStudioData } from "./StudioDataProvider";
 
@@ -13,6 +14,7 @@ import { useStudioData } from "./StudioDataProvider";
 export function useProjectEditor(project: Project) {
   const { run, busy } = useStudioData();
   const { t } = useI18n();
+  const { deleteParagraph } = useDeletion();
   const pid = project.id;
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [checked, setChecked] = useState<string[]>([]);
@@ -120,15 +122,12 @@ export function useProjectEditor(project: Project) {
         await paragraphService.mergeWithPrevious(pid, id);
       }),
     remove: (id: string) => {
-      setChecked((ids) => ids.filter((x) => x !== id));
-      updateDrafts((d) => {
-        if (!(id in d)) return d;
-        const next = { ...d };
-        delete next[id];
-        return next;
+      const paragraph = project.paragraphs.find((item) => item.id === id);
+      if (!paragraph) return;
+      deleteParagraph(project, paragraph, textOf(id), () => {
+        setChecked((ids) => ids.filter((x) => x !== id));
+        setFocusedId((focused) => (focused === id ? null : focused));
       });
-      if (focusedId === id) setFocusedId(null);
-      return run(() => paragraphService.remove(pid, id));
     },
     addParagraph: () => run(() => paragraphService.add(pid, [""])),
     importText: (file: File) =>

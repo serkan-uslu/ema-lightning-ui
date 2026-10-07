@@ -388,3 +388,306 @@ def test_render_jobs_do_not_wait_for_the_model(client):
     # Model unavailable: the older TTS job is skipped, the render job runs.
     assert app.next_job(model_ready=False)["id"] == "render-1"
     assert app.next_job(model_ready=True)["id"] == tts_job["id"]
+
+
+def test_delete_selected_take_removes_wav_and_preserves_other_versions(client):
+    p = project(client, "Merhaba.")
+    finish(generate(client, p))
+    first = fetch(client, p)["paragraphs"][0]["selected_take"]
+    finish(generate(client, p))
+    p = fetch(client, p)
+    selected = p["paragraphs"][0]["selected_take"]
+    selected_url = next(t["url"] for t in p["all_takes"] if t["id"] == selected)
+    r = client.delete(f"/api/projects/{p['id']}/takes/{selected}")
+    assert r.status_code == 200
+    current = r.json()
+    assert current["paragraphs"][0]["selected_take"] is None
+    assert current["paragraphs"][0]["status"] == "empty"
+    assert [t["id"] for t in current["all_takes"]] == [first]
+    assert not (app.DATA / "audio" / f"{selected}.wav").exists()
+    assert (app.DATA / "audio" / f"{first}.wav").is_file()
+    assert client.get(selected_url).status_code == 404
+    assert client.delete(f"/api/projects/{p['id']}/takes/{selected}").status_code == 404
+
+
+def test_delete_take_rejects_foreign_project_and_keeps_other_selection(client):
+    p = project(client)
+    finish(generate(client, p))
+    p = fetch(client, p)
+    take = p["paragraphs"][0]["selected_take"]
+    other_selected = p["paragraphs"][1]["selected_take"]
+    other = project(client)
+    assert client.delete(f"/api/projects/{other['id']}/takes/{take}").status_code == 404
+    assert (app.DATA / "audio" / f"{take}.wav").is_file()
+    assert client.delete(f"/api/projects/{p['id']}/takes/{take}").status_code == 200
+    assert fetch(client, p)["paragraphs"][1]["selected_take"] == other_selected
+    assert (app.DATA / "audio" / f"{other_selected}.wav").is_file()
+
+
+def test_montage_protects_take_then_removed_paragraph_orphan_can_be_deleted(client):
+    p = project(client, "Merhaba.")
+    finish(generate(client, p))
+    p = fetch(client, p)
+    take = p["paragraphs"][0]["selected_take"]
+    clip = {
+        "id": "clip",
+        "source_id": take,
+        "kind": "audio",
+        "label": "Ses",
+        "start": 0,
+        "duration": 0.5,
+    }
+    assert (
+        client.put(
+            f"/api/projects/{p['id']}/timeline", json={"clips": [clip]}
+        ).status_code
+        == 200
+    )
+    r = client.delete(f"/api/projects/{p['id']}/takes/{take}")
+    assert r.status_code == 409 and "montajda kullanılıyor" in r.json()["detail"]
+    assert (app.DATA / "audio" / f"{take}.wav").is_file()
+    client.delete(f"/api/projects/{p['id']}/paragraphs/{p['paragraphs'][0]['id']}")
+    assert client.delete(f"/api/projects/{p['id']}/takes/{take}").status_code == 409
+    client.put(f"/api/projects/{p['id']}/timeline", json={"clips": []})
+    r = client.delete(f"/api/projects/{p['id']}/takes/{take}")
+    assert r.status_code == 200 and not r.json()["all_takes"]
+
+
+@pytest.mark.parametrize("kind", ["tts", "render"])
+@pytest.mark.parametrize("status", ["queued", "running"])
+def test_active_jobs_block_project_and_take_deletion(client, kind, status):
+    p = project(client, "Merhaba.")
+    finish(generate(client, p))
+    p = fetch(client, p)
+    take = p["paragraphs"][0]["selected_take"]
+    if kind == "tts":
+        job = generate(client, p)[0]
+    else:
+        job = app.create_job(p["id"], "render", composition={"clips": []})
+    app.update_job(job, status=status)
+    for url in (
+        f"/api/projects/{p['id']}",
+        f"/api/projects/{p['id']}/takes/{take}",
+    ):
+        r = client.delete(url)
+        assert r.status_code == 409 and "bekleyen veya çalışan" in r.json()["detail"]
+    assert fetch(client, p)["all_takes"][0]["id"] == take
+    assert (app.DATA / "audio" / f"{take}.wav").is_file()
+
+
+def test_delete_project_cleans_owned_metadata_files_and_keeps_other_project(client):
+    p = project(client)
+    other = project(client)
+    for current in (p, other):
+        finish(generate(client, current))
+        asset = client.post(
+            f"/api/projects/{current['id']}/assets",
+            files={"file": ("ok.png", png_bytes(), "image/png")},
+        ).json()
+        render = app.create_job(current["id"], "render", composition={"clips": []})
+        app.update_job(render, status="failed")
+        for directory, suffix in (
+            ("renders", ".mp4"),
+            ("manifests", ".json"),
+            ("manifests", ".log"),
+        ):
+            (app.DATA / directory / f"{render['id']}{suffix}").write_bytes(b"test")
+        assert (app.DATA / "media" / app.Path(asset["url"]).name).is_file()
+    # Include the take retained after a paragraph is removed.
+    client.delete(f"/api/projects/{p['id']}/paragraphs/{p['paragraphs'][0]['id']}")
+    deleted = fetch(client, p)
+    survivor = fetch(client, other)
+    survivor_files = {
+        path: path.read_bytes()
+        for directory in ("audio", "media", "renders", "manifests")
+        for path in (app.DATA / directory).iterdir()
+        if any(
+            path.stem == item["id"]
+            for field in ("all_takes", "assets", "jobs")
+            for item in survivor[field]
+        )
+    }
+    r = client.delete(f"/api/projects/{p['id']}")
+    assert r.status_code == 200 and r.json() == {"deleted": True, "id": p["id"]}
+    assert client.get(f"/api/projects/{p['id']}").status_code == 404
+    assert [item["id"] for item in client.get("/api/projects").json()] == [other["id"]]
+    for table in ("takes", "assets", "jobs"):
+        assert not app.query(f"SELECT id FROM {table} WHERE project_id=?", (p["id"],))
+    for field, directory in (
+        ("all_takes", "audio"),
+        ("assets", "media"),
+        ("jobs", "renders"),
+        ("jobs", "manifests"),
+    ):
+        for item in deleted[field]:
+            assert not any(
+                path.stem == item["id"] for path in (app.DATA / directory).iterdir()
+            )
+    assert fetch(client, other) == survivor
+    assert all(path.read_bytes() == data for path, data in survivor_files.items())
+    assert client.delete(f"/api/projects/{p['id']}").status_code == 404
+
+
+def test_delete_take_does_not_block_history_but_old_render_retry_has_clear_error(
+    client,
+):
+    p = project(client, "Merhaba.")
+    finish(generate(client, p))
+    p = fetch(client, p)
+    take = p["paragraphs"][0]["selected_take"]
+    clip = {
+        "id": "clip",
+        "source_id": take,
+        "kind": "audio",
+        "label": "Ses",
+        "start": 0,
+        "duration": 0.5,
+    }
+    client.put(f"/api/projects/{p['id']}/timeline", json={"clips": [clip]})
+    render = client.post(f"/api/projects/{p['id']}/render").json()
+    app.update_job(render, status="failed", error="Render hatası")
+    assert client.post(f"/api/jobs/{render['id']}/retry").status_code == 200
+    app.update_job(render, status="failed", error="Render hatası")
+    client.put(f"/api/projects/{p['id']}/timeline", json={"clips": []})
+    assert client.delete(f"/api/projects/{p['id']}/takes/{take}").status_code == 200
+    r = client.post(f"/api/jobs/{render['id']}/retry")
+    assert r.status_code == 409 and "kaynak dosyaları silinmiş" in r.json()["detail"]
+    assert app.job_by_id(render["id"])["status"] == "failed"
+    assert app.next_job(model_ready=True) is None
+
+
+def test_render_retry_rejects_missing_source_file_even_when_metadata_exists(client):
+    p = project(client)
+    asset = client.post(
+        f"/api/projects/{p['id']}/assets",
+        files={"file": ("ok.png", png_bytes(), "image/png")},
+    ).json()
+    clip = {
+        "id": "clip",
+        "source_id": asset["id"],
+        "kind": "image",
+        "label": "Görsel",
+        "start": 0,
+        "duration": 5,
+    }
+    client.put(f"/api/projects/{p['id']}/timeline", json={"clips": [clip]})
+    render = client.post(f"/api/projects/{p['id']}/render").json()
+    app.update_job(render, status="interrupted")
+    (app.DATA / "media" / app.Path(asset["url"]).name).unlink()
+    r = client.post(f"/api/jobs/{render['id']}/retry")
+    assert r.status_code == 409 and "kaynak dosyaları silinmiş" in r.json()["detail"]
+    assert app.job_by_id(render["id"])["status"] == "interrupted"
+
+
+def test_upload_finishing_after_project_deletion_leaves_no_orphan(client, monkeypatch):
+    p = project(client)
+    original = app.Image.open
+    deleted = False
+
+    def delete_during_decode(*args, **kwargs):
+        nonlocal deleted
+        image = original(*args, **kwargs)
+        if not deleted:
+            deleted = True
+            assert client.delete(f"/api/projects/{p['id']}").status_code == 200
+        return image
+
+    monkeypatch.setattr(app.Image, "open", delete_during_decode)
+    r = client.post(
+        f"/api/projects/{p['id']}/assets",
+        files={"file": ("ok.png", png_bytes(), "image/png")},
+    )
+    assert r.status_code == 404
+    assert not list((app.DATA / "media").iterdir())
+    assert not app.query("SELECT id FROM assets")
+
+
+def stored_file_snapshot():
+    return {
+        path: path.read_bytes()
+        for directory in ("audio", "media", "renders", "manifests")
+        for path in (app.DATA / directory).iterdir()
+    }
+
+
+def test_project_delete_restores_staged_wavs_when_later_media_move_fails(
+    client, monkeypatch
+):
+    p = project(client)
+    finish(generate(client, p))
+    client.post(
+        f"/api/projects/{p['id']}/assets",
+        files={"file": ("ok.png", png_bytes(), "image/png")},
+    )
+    p = fetch(client, p)
+    before = stored_file_snapshot()
+    rename = app.Path.rename
+    moved_wavs = []
+
+    def fail_media_staging(path, target):
+        if path.parent == app.DATA / "media":
+            raise PermissionError("Simulated media directory permission error")
+        result = rename(path, target)
+        if path.parent == app.DATA / "audio":
+            moved_wavs.append(path)
+        return result
+
+    monkeypatch.setattr(app.Path, "rename", fail_media_staging)
+    r = client.delete(f"/api/projects/{p['id']}")
+    assert r.status_code == 500 and "Dosyalar silinemedi" in r.json()["detail"]
+    assert len(moved_wavs) == len(p["all_takes"])
+    assert fetch(client, p) == p
+    assert stored_file_snapshot() == before
+    assert not list(app.DATA.glob(".delete-*"))
+
+
+@pytest.mark.parametrize("kind", ["project", "take"])
+def test_deletion_restores_files_and_rolls_back_metadata_when_db_write_fails(
+    client, kind
+):
+    p = project(client, "Merhaba.")
+    finish(generate(client, p))
+    p = fetch(client, p)
+    before = stored_file_snapshot()
+    if kind == "project":
+        trigger = "BEFORE DELETE ON projects"
+        url = f"/api/projects/{p['id']}"
+    else:
+        # The take row is deleted first; failure of the following project update
+        # must roll it back along with the selected-take change and staged WAV.
+        trigger = "BEFORE UPDATE ON projects"
+        url = f"/api/projects/{p['id']}/takes/{p['paragraphs'][0]['selected_take']}"
+    app.query(
+        f"CREATE TRIGGER reject_deletion {trigger} "
+        "BEGIN SELECT RAISE(ABORT, 'Simulated DB write failure'); END"
+    )
+    r = client.delete(url)
+    assert r.status_code == 500
+    assert r.json()["detail"] == "Proje kayıtları silinemedi. Yeniden deneyin."
+    assert fetch(client, p) == p
+    assert stored_file_snapshot() == before
+    assert not list(app.DATA.glob(".delete-*"))
+
+
+def test_cleanup_failure_after_commit_does_not_resurrect_deleted_project(
+    client, monkeypatch
+):
+    p = project(client, "Merhaba.")
+    finish(generate(client, p))
+    p = fetch(client, p)
+    take = p["paragraphs"][0]["selected_take"]
+    original_cleanup = app.shutil.rmtree
+
+    def fail_cleanup(path):
+        raise PermissionError("Simulated staging cleanup failure")
+
+    monkeypatch.setattr(app.shutil, "rmtree", fail_cleanup)
+    r = client.delete(f"/api/projects/{p['id']}")
+    assert r.status_code == 200 and r.json()["deleted"]
+    assert client.get(f"/api/projects/{p['id']}").status_code == 404
+    assert not app.query("SELECT id FROM takes WHERE project_id=?", (p["id"],))
+    assert not (app.DATA / "audio" / f"{take}.wav").exists()
+    leftovers = list(app.DATA.glob(".delete-*"))
+    assert len(leftovers) == 1
+    assert (leftovers[0] / "audio" / f"{take}.wav").is_file()
+    original_cleanup(leftovers[0])

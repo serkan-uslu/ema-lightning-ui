@@ -145,7 +145,7 @@
 .project-table-head,
 .project-row {
   display: grid;
-  grid-template-columns: minmax(200px, 2.4fr) 1fr 0.8fr 0.8fr 76px;
+  grid-template-columns: minmax(200px, 2.4fr) 1fr 0.8fr 0.8fr 110px;
   align-items: center;
   gap: var(--space-4);
   padding: 0 var(--space-5);
@@ -596,6 +596,18 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+.library-archive {
+  margin-top: var(--space-4);
+}
+.library-archive summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  margin-bottom: var(--space-3);
+}
+.library-archive .hint {
+  margin-bottom: var(--space-3);
 }
 .library-item {
   display: flex;

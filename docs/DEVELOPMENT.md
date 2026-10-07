@@ -11,6 +11,10 @@ npm run dev                              # Next.js :3000 + FastAPI :8010
 
 Restart `npm run dev` after backend changes; the frontend hot-reloads.
 
+On the first `npm run dev`, the Python worker creates the EMA model and automatically downloads its weights from Hugging Face (`canberkkkkkk/ema-lightning`). No separate model download command or API key is needed. The web interface may open while the model is downloading or loading; wait for **Model ready** before generating speech. Both stages use the loading status; a download percentage is not available.
+
+`npm ci` and `uv sync` install dependencies; `npm run setup:browser` downloads the video render browser. These commands do not download the model weights. `npm run dev:web` and `npm start` only start Next.js, so they require a separately running FastAPI service for speech generation. See the [README](../README.md#data-backup-and-offline-use) for the Hugging Face cache location and offline setup.
+
 ## Scripts
 
 | Script                            | What it does                                                       |

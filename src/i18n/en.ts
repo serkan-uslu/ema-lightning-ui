@@ -75,6 +75,17 @@ const en: Dictionary = {
     previewFailed: (message) => `Preview failed to load: ${message}`,
   },
   backendErrors: {
+    "Ses denemesi bulunamadı.": "Audio take not found.",
+    "Bu projede bekleyen veya çalışan işler var. Silmeden önce bekleyen işleri iptal edin ve çalışan işlerin tamamlanmasını bekleyin.":
+      "This project has queued or running jobs. Cancel queued jobs and wait for running jobs to finish before deleting.",
+    "Bu ses denemesi montajda kullanılıyor. Silmeden önce ilgili klipleri montajdan kaldırıp kaydedin.":
+      "This audio take is used in the montage. Remove its clips and save the montage before deleting it.",
+    "Bu renderın kaynak dosyaları silinmiş. Montajı güncelleyip yeni bir render başlatın.":
+      "The source files for this render have been deleted. Update the montage and start a new render.",
+    "Dosyalar silinemedi. Veri klasörünün erişim izinlerini kontrol edip yeniden deneyin.":
+      "Files could not be deleted. Check access permissions for the data folder and try again.",
+    "Proje kayıtları silinemedi. Yeniden deneyin.":
+      "Project records could not be deleted. Try again.",
     "Proje bulunamadı.": "Project not found.",
     "Paragraf bulunamadı.": "Paragraph not found.",
     "Montaj kaynağı bu projede bulunamadı.":
@@ -208,6 +219,31 @@ const en: Dictionary = {
     submit: "Create project",
   },
   projectTabs: { audio: "Audio studio", montage: "Montage" },
+  deletion: {
+    projectTitle: "Delete this project?",
+    takeTitle: "Delete this audio take?",
+    paragraphTitle: "Delete this paragraph?",
+    deleteProject: "Delete project",
+    deleteTake: "Delete audio take",
+    deleting: "Deleting…",
+    projectDescription:
+      "This project's paragraphs, audio takes, uploaded images and videos, montage, rendered files and job history will be permanently deleted. This cannot be undone.",
+    takeDescription:
+      "This audio take and its WAV file will be permanently deleted. If it is the paragraph's selected take, that selection will be cleared. Older renders using this take cannot be retried. This cannot be undone.",
+    paragraphDescription:
+      "The paragraph's text and settings will be deleted. Generated audio is kept for montage use; you can delete it separately from the montage's audio library. This cannot be undone.",
+    activeJobs:
+      "This project has queued or running jobs. Cancel queued jobs in the production queue and wait for running jobs to finish before deleting.",
+    takeInMontage:
+      "This audio take is used in the saved montage or your unsaved edits. Remove its clips and save the montage before deleting it.",
+    emptyParagraph: "Empty paragraph",
+    audioFile: "Audio file",
+    createdAt: (date) => `Created: ${date}`,
+    takeId: (id) => `Take ID: ${id}`,
+    orphanTakes: (count) => `Audio from deleted paragraphs · ${count}`,
+    orphanHint:
+      "Audio is kept when a paragraph is deleted. You can listen, add it to the montage or permanently delete it here.",
+  },
   editor: {
     eyebrow: "SPEECH PRODUCTION STUDIO",
     rename: "Project name",

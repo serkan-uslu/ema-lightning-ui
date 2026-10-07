@@ -8,6 +8,7 @@ import {
   Pause,
   Play,
   Plus,
+  Trash2,
   Upload,
   Video,
 } from "lucide-react";
@@ -16,6 +17,7 @@ import {
   useTakePlayback,
 } from "@/controls/AudioPlayerProvider";
 import { useI18n } from "@/controls/I18nProvider";
+import { useDeletion } from "@/controls/DeletionProvider";
 import type { MontageEditor } from "@/controls/useMontageEditor";
 import { formatClock, formatKhz } from "@/lib/format";
 import type { Project, Take } from "@/lib/types";
@@ -30,8 +32,15 @@ export function MediaLibrary({
   editor: MontageEditor;
 }) {
   const { t } = useI18n();
+  const { deleteTake } = useDeletion();
   const m = t.montage;
   const [tab, setTab] = useState<"audio" | "media">("audio");
+  const orphanTakes = project.all_takes.filter(
+    (take) =>
+      !project.paragraphs.some(
+        (paragraph) => paragraph.id === take.paragraph_id,
+      ),
+  );
   return (
     <Panel icon={Layers} title={m.library} className="media-library">
       <Segmented
@@ -67,6 +76,8 @@ export function MediaLibrary({
                     }
                     queue={editor.takes}
                     onAdd={() => editor.append([take])}
+                    onDelete={() => deleteTake(project, take)}
+                    busy={editor.busy}
                   />
                 ))}
               </ul>
@@ -78,6 +89,25 @@ export function MediaLibrary({
                 {m.goToAudio} <ArrowRight size={15} />
               </ButtonLink>
             </div>
+          )}
+          {orphanTakes.length > 0 && (
+            <details className="library-archive">
+              <summary>{t.deletion.orphanTakes(orphanTakes.length)}</summary>
+              <p className="hint">{t.deletion.orphanHint}</p>
+              <ul className="library-list">
+                {orphanTakes.map((take) => (
+                  <AudioItem
+                    key={take.id}
+                    take={take}
+                    number={0}
+                    queue={orphanTakes}
+                    onAdd={() => editor.append([take])}
+                    onDelete={() => deleteTake(project, take)}
+                    busy={editor.busy}
+                  />
+                ))}
+              </ul>
+            </details>
           )}
         </>
       ) : (
@@ -136,11 +166,15 @@ function AudioItem({
   number,
   queue,
   onAdd,
+  onDelete,
+  busy,
 }: {
   take: Take;
   number: number;
   queue: Take[];
   onAdd: () => void;
+  onDelete: () => void;
+  busy: boolean;
 }) {
   const { t } = useI18n();
   const player = useAudioPlayer();
@@ -173,8 +207,21 @@ function AudioItem({
           {formatClock(take.duration)} · {formatKhz(take.sample_rate)}
         </span>
       </div>
-      <IconButton label={t.montage.addToTimeline} onClick={onAdd}>
+      <IconButton
+        label={t.montage.addToTimeline}
+        onClick={onAdd}
+        disabled={busy}
+      >
         <Plus size={16} />
+      </IconButton>
+      <IconButton
+        size="sm"
+        tone="danger"
+        label={t.deletion.deleteTake}
+        onClick={onDelete}
+        disabled={busy}
+      >
+        <Trash2 size={15} />
       </IconButton>
     </li>
   );

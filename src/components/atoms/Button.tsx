@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ButtonHTMLAttributes, ComponentProps } from "react";
+import type { ButtonHTMLAttributes, ComponentProps, Ref } from "react";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost";
 type Size = "md" | "sm";
@@ -21,6 +21,7 @@ const classes = (
     .join(" ");
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  ref?: Ref<HTMLButtonElement>;
   variant?: ButtonVariant;
   size?: Size;
   block?: boolean;

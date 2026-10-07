@@ -1,5 +1,6 @@
 "use client";
-import { Check, Pause, Play, History } from "lucide-react";
+import { Check, Pause, Play, History, Trash2 } from "lucide-react";
+import { useDeletion } from "@/controls/DeletionProvider";
 import {
   useAudioPlayer,
   useTakePlayback,
@@ -20,6 +21,7 @@ export function TakesPanel({
   editor: ProjectEditor;
 }) {
   const { t } = useI18n();
+  const { deleteTake } = useDeletion();
   const paragraph = editor.focused;
   if (!paragraph)
     return (
@@ -50,6 +52,8 @@ export function TakesPanel({
             number={takes.length - i}
             chosen={paragraph.selected_take === take.id}
             queue={takes}
+            busy={editor.busy}
+            onDelete={() => deleteTake(project, take)}
             onChoose={() =>
               editor.updateParagraph(paragraph.id, { selected_take: take.id })
             }
@@ -138,12 +142,16 @@ function TakeRow({
   chosen,
   queue,
   onChoose,
+  onDelete,
+  busy,
 }: {
   take: Take;
   number: number;
   chosen: boolean;
   queue: Take[];
   onChoose: () => void;
+  onDelete: () => void;
+  busy: boolean;
 }) {
   const { t } = useI18n();
   const player = useAudioPlayer();
@@ -175,10 +183,19 @@ function TakeRow({
       <IconButton
         label={chosen ? t.takes.chosen : t.takes.choose}
         tone={chosen ? "accent" : "default"}
-        disabled={chosen}
+        disabled={chosen || busy}
         onClick={onChoose}
       >
         <Check size={16} />
+      </IconButton>
+      <IconButton
+        size="sm"
+        tone="danger"
+        label={`${t.deletion.deleteTake} · ${t.takes.take(number)}`}
+        disabled={busy}
+        onClick={onDelete}
+      >
+        <Trash2 size={15} />
       </IconButton>
     </li>
   );

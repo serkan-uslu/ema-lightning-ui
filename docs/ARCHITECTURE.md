@@ -53,8 +53,11 @@ styles/     CSS layered like the component tree
 | `StudioDataProvider`  | Polls projects, jobs and health every 2 s; exposes `run()` for mutations                                                                                      |
 | `DraftsProvider`      | Unsaved montage timelines (per project) and paragraph texts (per paragraph). Survive navigation and editor unmounts; one `beforeunload` guard for all of them |
 | `AudioPlayerProvider` | One `<audio>` element for the whole app. Cards, take lists, the montage library and the player bar share play/pause/seek state                                |
+| `DeletionProvider`    | Shared project, take and paragraph confirmation flow; checks active jobs and montage references, runs deletion and cleans drafts/playback only after success  |
 
 Because the shell and providers live in the root layout, playback, data and unsaved drafts survive page navigation. `StudioDataProvider` reports the service as offline only after two consecutive failed polls, and `RequireData` keeps views mounted once data has loaded.
+
+`ConfirmationModal` is presentational: it traps focus, starts on Cancel, restores focus, supports Escape/backdrop cancellation and displays pending/error states. `DeletionProvider` makes the rest of the interface inert while the modal is open. It blocks take deletion for references in either the saved timeline or an unsaved draft. The backend independently checks saved references and queued/running jobs before deleting records and files. Paragraph deletion preserves takes for existing montages; the montage library exposes orphan takes for separate deletion.
 
 ### Controller hooks
 

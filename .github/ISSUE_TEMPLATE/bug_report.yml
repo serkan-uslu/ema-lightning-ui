@@ -1,0 +1,57 @@
+name: Bug report
+description: Report a problem with EMA Studio.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the problem in English or Turkish. Please search existing issues first.
+        For problems with the EMA Lightning model itself, use the [model repository](https://github.com/canberk7/ema-lightning/issues).
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe the problem and any error message you see.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include the screen or command where the problem occurs.
+      placeholder: |
+        1. Open ...
+        2. Click ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include what you know; write "unknown" for anything you cannot determine.
+      placeholder: |
+        App version or commit:
+        OS and version:
+        Browser and version:
+        Node.js version:
+        Python version:
+        Inference device (CPU or CUDA):
+        Startup command:
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Optional browser/backend logs or screenshots. Remove private project text, personal data and secrets before sharing.
+    validations:
+      required: false

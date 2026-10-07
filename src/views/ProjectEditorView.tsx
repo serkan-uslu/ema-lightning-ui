@@ -1,8 +1,17 @@
 "use client";
 import { useState } from "react";
-import { Headphones, Plus, RotateCcw, Save, Upload, Zap } from "lucide-react";
+import {
+  Headphones,
+  Plus,
+  RotateCcw,
+  Save,
+  Trash2,
+  Upload,
+  Zap,
+} from "lucide-react";
 import { useAudioPlayer } from "@/controls/AudioPlayerProvider";
 import { useDrafts } from "@/controls/DraftsProvider";
+import { useDeletion } from "@/controls/DeletionProvider";
 import { useI18n } from "@/controls/I18nProvider";
 import { useProject } from "@/controls/StudioDataProvider";
 import { useProjectEditor } from "@/controls/useProjectEditor";
@@ -47,6 +56,7 @@ export function ProjectEditorView({ projectId }: { projectId: string }) {
 function Editor({ project }: { project: Project }) {
   const { t } = useI18n();
   const editor = useProjectEditor(project);
+  const { deleteProject } = useDeletion();
   const player = useAudioPlayer();
   const [name, setName] = useState<string | null>(null);
   const playlist = selectedTakes(project);
@@ -69,14 +79,24 @@ function Editor({ project }: { project: Project }) {
           formatClock(editor.totalDuration),
         )}
         actions={
-          <Button
-            variant="primary"
-            disabled={editor.busy || !project.paragraphs.length}
-            onClick={() => editor.generate()}
-          >
-            <Zap size={17} />
-            {e.generateAll}
-          </Button>
+          <>
+            <IconButton
+              tone="danger"
+              label={t.deletion.deleteProject}
+              disabled={editor.busy}
+              onClick={() => deleteProject(project)}
+            >
+              <Trash2 size={18} />
+            </IconButton>
+            <Button
+              variant="primary"
+              disabled={editor.busy || !project.paragraphs.length}
+              onClick={() => editor.generate()}
+            >
+              <Zap size={17} />
+              {e.generateAll}
+            </Button>
+          </>
         }
       >
         <input

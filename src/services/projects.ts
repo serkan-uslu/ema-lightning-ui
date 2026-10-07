@@ -21,6 +21,10 @@ export const projectService = {
     request<Project>("/projects", "POST", { name, text }),
   update: (id: string, values: ProjectPatch) =>
     request<Project>(base(id), "PATCH", values),
+  remove: (id: string) =>
+    request<{ deleted: true; id: string }>(base(id), "DELETE"),
+  removeTake: (id: string, takeId: string) =>
+    request<Project>(`${base(id)}/takes/${takeId}`, "DELETE"),
   reorder: (id: string, ids: string[]) =>
     request(`${base(id)}/order`, "PUT", { ids }),
   generate: (id: string, ids?: string[], missingOnly = false) =>

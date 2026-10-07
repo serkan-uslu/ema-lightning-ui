@@ -463,6 +463,9 @@ main {
 }
 
 /* Modal */
+.deletion-surface {
+  display: contents;
+}
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -511,4 +514,43 @@ main {
   margin-top: var(--space-5);
   font-size: var(--fs-xs);
   color: var(--text-muted);
+}
+.confirmation-modal {
+  width: 540px;
+}
+.confirmation-icon {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border: 1px solid var(--danger-line);
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+}
+.confirmation-description {
+  display: grid;
+  gap: var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  margin-top: var(--space-4);
+}
+.confirmation-context {
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.confirmation-detail {
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}
+.confirmation-blocked {
+  padding: var(--space-3);
+  border: 1px solid var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: var(--radius-md);
+}
+.confirmation-actions {
+  justify-content: flex-end;
 }

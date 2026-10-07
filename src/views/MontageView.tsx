@@ -1,11 +1,12 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { Clapperboard, Save } from "lucide-react";
+import { Clapperboard, Save, Trash2 } from "lucide-react";
+import { useDeletion } from "@/controls/DeletionProvider";
 import { useI18n } from "@/controls/I18nProvider";
 import { useProject, useStudioData } from "@/controls/StudioDataProvider";
 import { useMontageEditor } from "@/controls/useMontageEditor";
 import type { Project } from "@/lib/types";
-import { Button, ButtonLink } from "@/components/atoms";
+import { Button, ButtonLink, IconButton } from "@/components/atoms";
 import { EmptyState, PageHeading, ProjectTabs } from "@/components/molecules";
 import {
   ClipInspector,
@@ -39,6 +40,7 @@ function Montage({ project }: { project: Project }) {
   const { t } = useI18n();
   const router = useRouter();
   const { projects } = useStudioData();
+  const { deleteProject } = useDeletion();
   const { playerRef, ...editor } = useMontageEditor(project);
   const m = t.montage;
 
@@ -57,6 +59,14 @@ function Montage({ project }: { project: Project }) {
         lead={m.lead}
         actions={
           <>
+            <IconButton
+              tone="danger"
+              label={t.deletion.deleteProject}
+              disabled={editor.busy}
+              onClick={() => deleteProject(project)}
+            >
+              <Trash2 size={18} />
+            </IconButton>
             {projects.length > 1 && (
               <select
                 className="project-switch"

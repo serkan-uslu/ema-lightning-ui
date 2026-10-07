@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { AppShell } from "@/components/templates/AppShell";
 import { AudioPlayerProvider } from "@/controls/AudioPlayerProvider";
 import { DraftsProvider } from "@/controls/DraftsProvider";
+import { DeletionProvider } from "@/controls/DeletionProvider";
 import { I18nProvider } from "@/controls/I18nProvider";
 import { ShellProvider } from "@/controls/ShellProvider";
 import { StudioDataProvider } from "@/controls/StudioDataProvider";
@@ -23,7 +24,24 @@ async function readPreferences() {
 
 export async function generateMetadata(): Promise<Metadata> {
   const { locale } = await readPreferences();
-  return dictionaries[locale].meta;
+  return {
+    ...dictionaries[locale].meta,
+    icons: {
+      icon: [
+        {
+          url: "/favicon.ico",
+          type: "image/x-icon",
+          sizes: "16x16 32x32 48x48",
+        },
+        { url: "/favicon.svg", type: "image/svg+xml", sizes: "any" },
+      ],
+      apple: {
+        url: "/apple-touch-icon.png",
+        type: "image/png",
+        sizes: "180x180",
+      },
+    },
+  };
 }
 
 export default async function RootLayout({
@@ -40,7 +58,9 @@ export default async function RootLayout({
             <StudioDataProvider>
               <DraftsProvider>
                 <AudioPlayerProvider>
-                  <AppShell>{children}</AppShell>
+                  <DeletionProvider>
+                    <AppShell>{children}</AppShell>
+                  </DeletionProvider>
                 </AudioPlayerProvider>
               </DraftsProvider>
             </StudioDataProvider>

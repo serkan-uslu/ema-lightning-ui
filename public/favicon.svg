@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>EMA Studio</title>
+  <rect width="64" height="64" rx="18" fill="#edba73" />
+  <g
+    fill="none"
+    stroke="#2a2117"
+    stroke-width="2.2"
+    stroke-linecap="round"
+    transform="translate(12.2 12.2) scale(1.65)"
+  >
+    <path d="M2 10v3 M6 6v11 M10 3v18 M14 8v7 M18 5v13 M22 10v3" />
+  </g>
+</svg>

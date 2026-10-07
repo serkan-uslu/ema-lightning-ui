@@ -1,14 +1,18 @@
 "use client";
 import Link from "next/link";
-import { ArrowRight, AudioLines, Clapperboard } from "lucide-react";
+import { ArrowRight, AudioLines, Clapperboard, Trash2 } from "lucide-react";
+import { useDeletion } from "@/controls/DeletionProvider";
 import { useI18n } from "@/controls/I18nProvider";
+import { useStudioData } from "@/controls/StudioDataProvider";
 import { formatClock, formatShortDate } from "@/lib/format";
 import { projectStats } from "@/lib/project";
 import type { Project } from "@/lib/types";
-import { IconLink, ProgressBar } from "../atoms";
+import { IconButton, IconLink, ProgressBar } from "../atoms";
 
 export function ProjectTable({ projects }: { projects: Project[] }) {
   const { t, locale } = useI18n();
+  const { deleteProject } = useDeletion();
+  const { busy } = useStudioData();
   const c = t.projects.columns;
   return (
     <div className="project-table" role="table">
@@ -49,6 +53,15 @@ export function ProjectTable({ projects }: { projects: Project[] }) {
               {formatShortDate(project.updated_at, locale)}
             </span>
             <span className="row-actions" role="cell">
+              <IconButton
+                size="sm"
+                tone="danger"
+                label={`${t.deletion.deleteProject} · ${project.name}`}
+                disabled={busy}
+                onClick={() => deleteProject(project)}
+              >
+                <Trash2 size={16} />
+              </IconButton>
               <IconLink
                 size="sm"
                 label={t.projects.openMontage}

@@ -8,7 +8,7 @@ Voice long texts paragraph by paragraph, keep every take, export WAV/ZIP and bui
 
 [Türkçe README](README.tr.md) · [Architecture](docs/ARCHITECTURE.md) · [Development](docs/DEVELOPMENT.md) · [Contributing](CONTRIBUTING.md)
 
-**Repository:** <https://github.com/serkan-uslu/ema-lightning-ui> · **Website source:** <https://github.com/serkan-uslu/ema-studio-site>
+**Repository:** <https://github.com/serkan-uslu/ema-lightning-ui>
 
 </div>
 
@@ -57,7 +57,7 @@ npm run setup:browser
 npm run dev
 ```
 
-Open <http://localhost:3000>. `npm run dev` starts Next.js on port 3000 and FastAPI on port 8010 (both bound to `127.0.0.1`); Ctrl+C stops both. On first launch the model weights are downloaded from Hugging Face and the sidebar shows the model status.
+Open <http://localhost:3000>. `npm run dev` starts Next.js on port 3000 and FastAPI on port 8010 (both bound to `127.0.0.1`); Ctrl+C stops both. On first launch the model weights are downloaded automatically from Hugging Face. No separate model download command or API key is required. The studio may open before loading finishes; wait for **Model ready** in the sidebar before generating speech. Later launches reuse the local cache.
 
 On macOS, install FFmpeg with `brew install ffmpeg` if needed.
 
@@ -69,6 +69,10 @@ On macOS, install FFmpeg with `brew install ffmpeg` if needed.
 4. **Listen and choose** — click a paragraph to see its takes, play them and pick the one to use.
 5. **Export** a combined WAV or a ZIP, or switch to the **Montage** tab.
 6. **Montage** — add selected takes in order, upload PNG/JPEG or H.264/AAC MP4, arrange on the timeline, then **Render MP4** and download it.
+
+Projects, paragraphs and audio takes have **Delete** actions with an in-app confirmation dialog. Project deletion permanently removes its audio, media, render outputs and job records. Queued or running jobs block project and take deletion; cancel queued jobs and wait for running jobs to finish first.
+
+A take used by a saved or unsaved montage cannot be deleted. Remove its clips and save the montage first. Deleting a selected take clears the selection; other takes remain. Deleting a paragraph keeps its audio available in the montage library, where you can delete unused takes separately. Removing a clip from the timeline keeps its source file.
 
 ## Data, backup and offline use
 
@@ -107,7 +111,7 @@ This app is designed for a single local user. It has no authentication and must 
 - Images: PNG/JPEG. Video: H.264 MP4 with optional AAC audio, max 300 MB per file.
 - Montage up to 2 hours and 500 clips; clips on the same track cannot overlap; every clip is at least one frame (1/30 s).
 - Jobs run one at a time; pausing waits for the running job.
-- Retrying a job reuses its original snapshot.
+- Retrying a job reuses its original snapshot. If a source take was deleted, update the montage and start a new render instead; completed MP4 files remain until their project is deleted.
 - No effects, keyframes, multi-layer compositing, automatic subtitles or live streaming.
 
 ## Troubleshooting

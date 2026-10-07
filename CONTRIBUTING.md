@@ -12,6 +12,14 @@ Thanks for helping improve EMA Studio! This is a community interface for the [EM
 
 EMA Studio stays a focused, local, single-user tool. Out of scope for now: cloud inference, accounts, external databases, advanced multi-track editing and features the model does not support (voice cloning, emotion control). Do not present the model card's benchmark numbers as local measurements.
 
+## Issues
+
+Use the [issue chooser](https://github.com/serkan-uslu/ema-lightning-ui/issues/new/choose) to report a bug or request a feature. Reports in English or Turkish are welcome; search existing issues before opening a new one.
+
+- **Bug report:** include what happened, reproducible steps, expected behavior, and your environment (OS, browser, app version or commit, Node.js/Python versions, and CPU/CUDA when relevant). Add logs or screenshots if useful, removing private project text, personal data and secrets.
+- **Feature request:** explain the problem or use case and the behavior you want. Include alternatives or workarounds when helpful.
+- Blank issues remain available for questions or topics that do not fit either form.
+
 ## Pull requests
 
 1. Keep changes small and focused; match the existing patterns.
@@ -26,6 +34,8 @@ EMA Studio stays a focused, local, single-user tool. Out of scope for now: cloud
 
 4. Describe what you tested manually (see the checklist in `docs/DEVELOPMENT.md`).
 5. Never commit `data/`, `.env*`, model weights, API keys or other secrets.
+
+The pull request template asks for the reason for the change, validation results, and relevant documentation or interface updates. Mark checks you could not run clearly.
 
 The pre-commit hook runs ESLint and Prettier on staged files; fix any warning it reports instead of bypassing it.
 

@@ -1,0 +1,38 @@
+name: Feature request
+description: Suggest an improvement to EMA Studio.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe your idea in English or Turkish. Please search existing issues first.
+        EMA Studio focuses on local speech production and basic montage editing; see [the contribution guide](https://github.com/serkan-uslu/ema-lightning-ui/blob/main/CONTRIBUTING.md) for scope.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What are you trying to do, and what makes it difficult today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed improvement
+      description: Describe the behavior you would like to see.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Optional workarounds or other approaches you have considered.
+    validations:
+      required: false
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Optional examples or screenshots that help explain your request.
+    validations:
+      required: false

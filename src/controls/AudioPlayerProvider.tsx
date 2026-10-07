@@ -32,6 +32,8 @@ type PlayerControls = {
   previous: () => void;
   setVolume: (volume: number) => void;
   close: () => void;
+  /** Removes deleted sources from playback; resets if the current source was deleted. */
+  removeTakes: (ids: string[]) => void;
 };
 
 type PlayerClock = { time: number; duration: number };
@@ -134,11 +136,34 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const close = useCallback(() => {
+    audioRef.current?.pause();
     setQueue([]);
     setIndex(0);
     setTime(0);
+    setDuration(0);
     setPlaying(false);
   }, []);
+
+  const removeTakes = useCallback(
+    (ids: string[]) => {
+      if (!ids.length) return;
+      const deleted = new Set(ids);
+      if (current && deleted.has(current.id)) {
+        close();
+        return;
+      }
+      const next = queue.filter((take) => !deleted.has(take.id));
+      if (next.length === queue.length) return;
+      setQueue(next);
+      setIndex(
+        Math.max(
+          0,
+          next.findIndex((take) => take.id === current?.id),
+        ),
+      );
+    },
+    [close, current, queue],
+  );
 
   const controls = useMemo(
     () => ({
@@ -156,6 +181,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       previous,
       setVolume,
       close,
+      removeTakes,
     }),
     [
       queue,
@@ -172,6 +198,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       previous,
       setVolume,
       close,
+      removeTakes,
     ],
   );
   const clock = useMemo(() => ({ time, duration }), [time, duration]);

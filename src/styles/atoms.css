@@ -46,6 +46,16 @@
 .btn-block {
   width: 100%;
 }
+.btn-danger {
+  color: var(--danger);
+  border-color: var(--danger-line);
+  background: var(--danger-soft);
+}
+.btn-danger:hover:not(:disabled) {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
 
 .icon-btn {
   display: inline-flex;

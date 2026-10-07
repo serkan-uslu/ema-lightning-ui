@@ -144,6 +144,31 @@ const tr = {
     submit: "Proje oluştur",
   },
   projectTabs: { audio: "Ses stüdyosu", montage: "Montaj" },
+  deletion: {
+    projectTitle: "Bu proje silinsin mi?",
+    takeTitle: "Bu ses denemesi silinsin mi?",
+    paragraphTitle: "Bu paragraf silinsin mi?",
+    deleteProject: "Projeyi sil",
+    deleteTake: "Ses denemesini sil",
+    deleting: "Siliniyor…",
+    projectDescription:
+      "Bu projenin paragrafları, ses denemeleri, yüklenen görsel ve videoları, montajı, render çıktıları ve iş geçmişi kalıcı olarak silinir. Bu işlem geri alınamaz.",
+    takeDescription:
+      "Bu ses denemesi ve WAV dosyası kalıcı olarak silinir. Paragrafın seçili sesiyse seçim kaldırılır. Bu sesi kullanan eski renderlar yeniden başlatılamaz. Bu işlem geri alınamaz.",
+    paragraphDescription:
+      "Paragrafın metni ve ayarları silinir. Üretilmiş sesler montajda kullanılabilmesi için korunur; bunları montajın ses kütüphanesinden ayrıca silebilirsin. Bu işlem geri alınamaz.",
+    activeJobs:
+      "Bu projede bekleyen veya çalışan işler var. Silmeden önce kuyruktaki bekleyen işleri iptal et ve çalışan işlerin tamamlanmasını bekle.",
+    takeInMontage:
+      "Bu ses denemesi kaydedilmiş montajda veya kaydedilmemiş düzenlemelerinde kullanılıyor. Silmeden önce ilgili klipleri montajdan kaldırıp kaydet.",
+    emptyParagraph: "Boş paragraf",
+    audioFile: "Ses dosyası",
+    createdAt: (date: string) => `Oluşturulma: ${date}`,
+    takeId: (id: string) => `Ses kimliği: ${id}`,
+    orphanTakes: (count: number) => `Silinen paragrafların sesleri · ${count}`,
+    orphanHint:
+      "Paragraf silindiğinde sesleri korunur. Buradan dinleyebilir, montaja ekleyebilir veya kalıcı olarak silebilirsin.",
+  },
   editor: {
     eyebrow: "SES ÜRETİM STÜDYOSU",
     rename: "Proje adı",

@@ -8,7 +8,7 @@ Uzun metinleri paragraf paragraf seslendir, her denemeyi sakla, WAV/ZIP dışa a
 
 [English README](README.md) · [Mimari](docs/ARCHITECTURE.md) · [Geliştirme](docs/DEVELOPMENT.md) · [Katkı](CONTRIBUTING.md)
 
-**Depo:** <https://github.com/serkan-uslu/ema-lightning-ui> · **Tanıtım sitesi kaynağı:** <https://github.com/serkan-uslu/ema-studio-site>
+**Depo:** <https://github.com/serkan-uslu/ema-lightning-ui>
 
 </div>
 
@@ -57,7 +57,7 @@ npm run setup:browser
 npm run dev
 ```
 
-<http://localhost:3000> adresini aç. `npm run dev`, Next.js'i 3000 ve FastAPI'yi 8010 portunda (`127.0.0.1`) birlikte başlatır; Ctrl+C ikisini de kapatır. İlk açılışta model ağırlıkları Hugging Face'ten indirilir.
+<http://localhost:3000> adresini aç. `npm run dev`, Next.js'i 3000 ve FastAPI'yi 8010 portunda (`127.0.0.1`) birlikte başlatır; Ctrl+C ikisini de kapatır. İlk açılışta model ağırlıkları Hugging Face'ten otomatik indirilir. Ayrı bir model indirme komutu veya API anahtarı gerekmez. Stüdyo yükleme bitmeden açılabilir; ses üretmeden önce kenar menüde **Model hazır** durumunu bekle. Sonraki açılışlarda yerel önbellek kullanılır.
 
 ## Kullanım
 
@@ -67,6 +67,12 @@ npm run dev
 4. Bir paragrafa tıklayıp **denemelerini dinle** ve kullanılacak sesi seç.
 5. Birleşik WAV veya ZIP **dışa aktar** ya da **Montaj** sekmesine geç.
 6. **Montajda** seçili sesleri sırayla ekle, PNG/JPEG veya H.264/AAC MP4 yükle, timeline'da düzenle, **MP4 render** al ve indir.
+
+## Proje ve ses silme
+
+Projeler, paragraflar ve ses denemeleri **Sil** işlemiyle, uygulama içindeki bir onay penceresinden silinir. Proje silindiğinde sesleri, medya dosyaları, video çıktıları ve iş kayıtları kalıcı olarak kaldırılır. Bekleyen veya çalışan işler varken proje ve ses silinemez; önce bekleyen işleri iptal et ve çalışan işlerin bitmesini bekle.
+
+Kayıtlı ya da kaydedilmemiş montajda kullanılan bir ses denemesi silinemez. Önce ilgili klipleri kaldırıp montajı kaydet. Seçili sesi silmek seçimi temizler; diğer denemeler korunur. Paragrafı silmek seslerini kaldırmaz: kullanılmayan sesleri montaj kütüphanesinden ayrıca silebilirsin. Montajdan klip kaldırmak da kaynak dosyasını silmez.
 
 ## Veri, yedekleme ve çevrimdışı kullanım
 
@@ -86,7 +92,7 @@ Uygulama tek yerel kullanıcı içindir; kimlik doğrulama yoktur, internete aç
 
 - Görsel PNG/JPEG; video H.264 MP4 (varsa AAC ses), dosya başına en fazla 300 MB.
 - Montaj en fazla 2 saat ve 500 klip; aynı kanalda klipler çakışamaz; her klip en az bir frame (1/30 sn).
-- İşler sırayla çalışır; duraklatma çalışan işin bitmesini bekler. Yeniden deneme orijinal snapshot'ı kullanır.
+- İşler sırayla çalışır; duraklatma çalışan işin bitmesini bekler. Yeniden deneme orijinal snapshot'ı kullanır. Kaynak ses silinmişse montajı güncelleyip yeni bir video çıktısı oluştur; tamamlanan MP4 dosyaları proje silinene kadar korunur.
 - Efekt, keyframe, çok katman, otomatik altyazı ve canlı streaming yoktur.
 
 ## Sorun giderme

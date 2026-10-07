@@ -12,6 +12,7 @@ from pathlib import Path
 import shutil
 import sqlite3
 import subprocess
+import tempfile
 import threading
 import time
 import uuid
@@ -98,6 +99,68 @@ def raw_project(pid):
     return json.loads(row["data"])
 
 
+def require_idle_project(pid):
+    if query(
+        "SELECT id FROM jobs WHERE project_id=? AND status IN ('queued','running')",
+        (pid,),
+        one=True,
+    ):
+        raise HTTPException(
+            409,
+            "Bu projede bekleyen veya çalışan işler var. "
+            "Silmeden önce bekleyen işleri iptal edin ve çalışan işlerin "
+            "tamamlanmasını bekleyin.",
+        )
+
+
+@contextlib.contextmanager
+def staged_deletion(paths):
+    """Hold stored files until the metadata transaction commits; restore on error."""
+    staging = None
+    moved = []
+    restored = True
+    try:
+        staging = Path(tempfile.mkdtemp(prefix=".delete-", dir=DATA))
+        for path in paths:
+            if not path.exists() and not path.is_symlink():
+                continue
+            if path.is_dir():
+                raise OSError("Expected a stored file, found a directory")
+            target = staging / path.relative_to(DATA)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            path.rename(target)
+            moved.append((path, target))
+        yield
+    except BaseException as exc:
+        LOG.exception("Deletion failed; restoring stored files")
+        for path, target in reversed(moved):
+            try:
+                target.rename(path)
+            except OSError:
+                # Preserve this directory if restore itself fails; never discard
+                # the only remaining copy of a file whose DB record still exists.
+                restored = False
+                LOG.exception("File restore failed; retained staging: %s", staging)
+        if isinstance(exc, OSError):
+            raise HTTPException(
+                500,
+                "Dosyalar silinemedi. Veri klasörünün erişim izinlerini kontrol edip "
+                "yeniden deneyin.",
+            ) from exc
+        if isinstance(exc, sqlite3.Error):
+            raise HTTPException(
+                500, "Proje kayıtları silinemedi. Yeniden deneyin."
+            ) from exc
+        raise
+    finally:
+        if staging and restored:
+            try:
+                shutil.rmtree(staging)
+            except OSError:
+                # Once committed, cleanup errors must not resurrect DB records.
+                LOG.exception("Deletion staging cleanup failed: %s", staging)
+
+
 def save_project(project):
     project["updated_at"] = now()
     query(
@@ -175,9 +238,7 @@ def project_view(pid):
             latest = next(
                 (j for j in jobs if j.get("paragraph_id") == paragraph["id"]), None
             )
-            newest_take = max(
-                (t["created_at"] for t in paragraph["takes"]), default=""
-            )
+            newest_take = max((t["created_at"] for t in paragraph["takes"]), default="")
             failed = (
                 latest
                 if latest
@@ -597,10 +658,11 @@ def health():
 
 @app.get("/api/projects")
 def projects():
-    out = []
-    for row in query("SELECT id FROM projects"):
-        p = project_view(row["id"])
-        out.append(p)
+    with LOCK:
+        out = []
+        for row in query("SELECT id FROM projects"):
+            p = project_view(row["id"])
+            out.append(p)
     return sorted(out, key=lambda p: p["updated_at"], reverse=True)
 
 
@@ -628,6 +690,69 @@ def add_project(body: NewProject):
 
 @app.get("/api/projects/{pid}")
 def get_project(pid: str):
+    return project_view(pid)
+
+
+@app.delete("/api/projects/{pid}")
+def delete_project(pid: str):
+    with LOCK:
+        raw_project(pid)
+        require_idle_project(pid)
+        paths = []
+        for row in query("SELECT id FROM takes WHERE project_id=?", (pid,)):
+            paths.append(DATA / "audio" / f"{row['id']}.wav")
+        for row in query("SELECT data FROM assets WHERE project_id=?", (pid,)):
+            asset = json.loads(row["data"])
+            paths.append(DATA / "media" / Path(asset["url"]).name)
+        for row in query("SELECT id FROM jobs WHERE project_id=?", (pid,)):
+            for directory, suffix in (
+                ("renders", ".mp4"),
+                ("manifests", ".json"),
+                ("manifests", ".log"),
+            ):
+                paths.append(DATA / directory / f"{row['id']}{suffix}")
+        with staged_deletion(paths):
+            with sqlite3.connect(DB, timeout=30) as conn:
+                for table in ("takes", "assets", "jobs"):
+                    conn.execute(f"DELETE FROM {table} WHERE project_id=?", (pid,))
+                conn.execute("DELETE FROM projects WHERE id=?", (pid,))
+    return {"deleted": True, "id": pid}
+
+
+@app.delete("/api/projects/{pid}/takes/{take_id}")
+def delete_take(pid: str, take_id: str):
+    with LOCK:
+        p = raw_project(pid)
+        row = query(
+            "SELECT id FROM takes WHERE id=? AND project_id=?",
+            (take_id, pid),
+            one=True,
+        )
+        if not row:
+            raise HTTPException(404, "Ses denemesi bulunamadı.")
+        require_idle_project(pid)
+        if any(
+            c["kind"] == "audio" and c["source_id"] == take_id
+            for c in p["timeline"]["clips"]
+        ):
+            raise HTTPException(
+                409,
+                "Bu ses denemesi montajda kullanılıyor. Silmeden önce ilgili "
+                "klipleri montajdan kaldırıp kaydedin.",
+            )
+        for paragraph in p["paragraphs"]:
+            if paragraph.get("selected_take") == take_id:
+                paragraph["selected_take"] = None
+        p["updated_at"] = now()
+        with staged_deletion([DATA / "audio" / f"{take_id}.wav"]):
+            with sqlite3.connect(DB, timeout=30) as conn:
+                conn.execute(
+                    "DELETE FROM takes WHERE id=? AND project_id=?", (take_id, pid)
+                )
+                conn.execute(
+                    "UPDATE projects SET data=? WHERE id=?",
+                    (json.dumps(p, ensure_ascii=False), pid),
+                )
     return project_view(pid)
 
 
@@ -784,6 +909,22 @@ def retry(jid: str):
                     raise HTTPException(409, "Bu paragraf zaten üretim kuyruğunda.")
         else:
             raw_project(job["project_id"])
+            for clip in job["composition"]["clips"]:
+                try:
+                    item = source(job["project_id"], clip["source_id"], clip["kind"])
+                    path = (
+                        DATA
+                        / ("audio" if clip["kind"] == "audio" else "media")
+                        / Path(item["url"]).name
+                    )
+                    if not path.is_file():
+                        raise HTTPException(404)
+                except HTTPException as exc:
+                    raise HTTPException(
+                        409,
+                        "Bu renderın kaynak dosyaları silinmiş. "
+                        "Montajı güncelleyip yeni bir render başlatın.",
+                    ) from exc
         update_job(job, status="queued", progress=0, error=None)
     return job
 
@@ -919,10 +1060,14 @@ def upload(pid: str, file: UploadFile = File(...)):
             "url": f"/api/files/media/{path.name}",
             "size": size,
         }
-        query(
-            "INSERT INTO assets VALUES(?,?,?)",
-            (aid, pid, json.dumps(asset, ensure_ascii=False)),
-        )
+        with LOCK:
+            # A project may be deleted while the upload is being decoded.
+            # Recheck before inserting, and let the error cleanup remove its file.
+            raw_project(pid)
+            query(
+                "INSERT INTO assets VALUES(?,?,?)",
+                (aid, pid, json.dumps(asset, ensure_ascii=False)),
+            )
         return asset
     except HTTPException:
         path.unlink(missing_ok=True)

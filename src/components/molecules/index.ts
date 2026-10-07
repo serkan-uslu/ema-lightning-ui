@@ -1,4 +1,5 @@
 export { EmptyState } from "./EmptyState";
+export { ConfirmationModal } from "./ConfirmationModal";
 export { FileButton } from "./FileButton";
 export { NavItem } from "./NavItem";
 export { Notice } from "./Notice";
