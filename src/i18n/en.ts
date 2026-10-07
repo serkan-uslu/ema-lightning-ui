@@ -484,7 +484,6 @@ const en: Dictionary = {
       "Heartfelt thanks to Canberk Aslan (@canberkkkkkk) for sharing the model openly and for this contribution to Turkish speech technology. The model’s Turkish text normalization is built on Erdem Tuna’s normalizer-tr; thanks to him as well.",
     links: "Links",
     appSource: "EMA Studio source code (GitHub)",
-    siteSource: "Website source code",
     modelCard: "Hugging Face model card",
     sourceCode: "Model source code (GitHub)",
     pypi: "Python package (PyPI)",

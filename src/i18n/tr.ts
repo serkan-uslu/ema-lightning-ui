@@ -408,7 +408,6 @@ const tr = {
       "Modeli açık kaynak olarak paylaştığı ve Türkçe ses teknolojisine kattığı emek için Canberk Aslan’a (@canberkkkkkk) içtenlikle teşekkür ederiz. Modelin Türkçe metin normalizasyonu Erdem Tuna’nın normalizer-tr projesine dayanır; ona da teşekkürler.",
     links: "Bağlantılar",
     appSource: "EMA Studio kaynak kodu (GitHub)",
-    siteSource: "Tanıtım sitesi kaynak kodu",
     modelCard: "Hugging Face model kartı",
     sourceCode: "Model kaynak kodu (GitHub)",
     pypi: "Python paketi (PyPI)",

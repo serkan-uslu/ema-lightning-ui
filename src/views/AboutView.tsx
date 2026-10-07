@@ -16,7 +16,6 @@ import { PageHeading, Panel } from "@/components/molecules";
 
 export const PROJECT_LINKS = {
   app: "https://github.com/serkan-uslu/ema-lightning-ui",
-  site: "https://github.com/serkan-uslu/ema-studio-site",
 };
 
 export const MODEL_LINKS = {
@@ -111,11 +110,6 @@ export function AboutView() {
               href={PROJECT_LINKS.app}
               label={a.appSource}
               detail="serkan-uslu/ema-lightning-ui"
-            />
-            <ExternalItem
-              href={PROJECT_LINKS.site}
-              label={a.siteSource}
-              detail="serkan-uslu/ema-studio-site"
             />
             <ExternalItem
               href={MODEL_LINKS.card}
