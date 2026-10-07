@@ -85,7 +85,7 @@ Uygulama tek yerel kullanıcı içindir; kimlik doğrulama yoktur, internete aç
 ## Sınırlar
 
 - Görsel PNG/JPEG; video H.264 MP4 (varsa AAC ses), dosya başına en fazla 300 MB.
-- Montaj en fazla 2 saat ve 500 klip; aynı kanalda klipler çakışamaz.
+- Montaj en fazla 2 saat ve 500 klip; aynı kanalda klipler çakışamaz; her klip en az bir frame (1/30 sn).
 - İşler sırayla çalışır; duraklatma çalışan işin bitmesini bekler. Yeniden deneme orijinal snapshot'ı kullanır.
 - Efekt, keyframe, çok katman, otomatik altyazı ve canlı streaming yoktur.
 
@@ -101,7 +101,7 @@ Uygulama tek yerel kullanıcı içindir; kimlik doğrulama yoktur, internete aç
 ```bash
 npm run check          # typecheck + ESLint + Prettier kontrolü
 npm run build          # üretim derlemesi
-npm run test:backend   # pytest (13 test)
+npm run test:backend   # pytest
 ```
 
 Husky pre-commit kancası lint-staged ile stage'lenen dosyalarda ESLint ve Prettier çalıştırır. Ayrıntılar: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/I18N.md](docs/I18N.md), [docs/API.md](docs/API.md).

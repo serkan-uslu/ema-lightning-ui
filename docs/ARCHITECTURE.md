@@ -15,7 +15,7 @@ Browser ──/api/*──▶ Next.js rewrite ──▶ FastAPI (127.0.0.1:8010)
                                          └─ queue worker ──spawn──▶ node scripts/render.mjs
 ```
 
-The Python worker runs speech and render jobs one at a time. Every job stores a snapshot (text/settings or timeline), so retries reproduce the original request. See the README for limits.
+The Python worker runs speech and render jobs one at a time. Render jobs never need the model, so they keep running if EMA fails to load. Every job stores a snapshot (text/settings or timeline), so retries reproduce the original request. See the README for limits.
 
 ## Frontend layering: service → control → UI
 
@@ -46,14 +46,15 @@ styles/     CSS layered like the component tree
 
 ### Providers (mounted once in `app/layout.tsx`)
 
-| Provider              | Purpose                                                                                                                        |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `I18nProvider`        | Active locale and dictionary; persists the choice in the `ema-locale` cookie so the server renders the right language          |
-| `ShellProvider`       | Sidebar collapsed state (`ema-sidebar` cookie), mobile drawer, new-project dialog                                              |
-| `StudioDataProvider`  | Polls projects, jobs and health every 2 s; exposes `run()` for mutations                                                       |
-| `AudioPlayerProvider` | One `<audio>` element for the whole app. Cards, take lists, the montage library and the player bar share play/pause/seek state |
+| Provider              | Purpose                                                                                                                                                       |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `I18nProvider`        | Active locale and dictionary; persists the choice in the `ema-locale` cookie so the server renders the right language                                         |
+| `ShellProvider`       | Sidebar collapsed state (`ema-sidebar` cookie), mobile drawer, new-project dialog                                                                             |
+| `StudioDataProvider`  | Polls projects, jobs and health every 2 s; exposes `run()` for mutations                                                                                      |
+| `DraftsProvider`      | Unsaved montage timelines (per project) and paragraph texts (per paragraph). Survive navigation and editor unmounts; one `beforeunload` guard for all of them |
+| `AudioPlayerProvider` | One `<audio>` element for the whole app. Cards, take lists, the montage library and the player bar share play/pause/seek state                                |
 
-Because the shell and providers live in the root layout, playback and data survive page navigation.
+Because the shell and providers live in the root layout, playback, data and unsaved drafts survive page navigation. `StudioDataProvider` reports the service as offline only after two consecutive failed polls, and `RequireData` keeps views mounted once data has loaded.
 
 ### Controller hooks
 

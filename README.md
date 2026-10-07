@@ -105,7 +105,7 @@ This app is designed for a single local user. It has no authentication and must 
 ## Limits
 
 - Images: PNG/JPEG. Video: H.264 MP4 with optional AAC audio, max 300 MB per file.
-- Montage up to 2 hours and 500 clips; clips on the same track cannot overlap.
+- Montage up to 2 hours and 500 clips; clips on the same track cannot overlap; every clip is at least one frame (1/30 s).
 - Jobs run one at a time; pausing waits for the running job.
 - Retrying a job reuses its original snapshot.
 - No effects, keyframes, multi-layer compositing, automatic subtitles or live streaming.
@@ -122,7 +122,7 @@ This app is designed for a single local user. It has no authentication and must 
 ```bash
 npm run check          # typecheck + ESLint + Prettier check
 npm run build          # production build
-npm run test:backend   # pytest suite (13 tests)
+npm run test:backend   # pytest suite
 ```
 
 A Husky pre-commit hook runs lint-staged (ESLint + Prettier on staged files). See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the workflow and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the service → control → UI layering and the atomic component structure. Translations are described in [docs/I18N.md](docs/I18N.md) and the HTTP API in [docs/API.md](docs/API.md).
