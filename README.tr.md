@@ -12,6 +12,10 @@ Uzun metinleri paragraf paragraf seslendir, her denemeyi sakla, WAV/ZIP dışa a
 
 </div>
 
+<p align="center">
+  <img src="docs/images/screenshot-tr.webp" alt="EMA Studio ses stüdyosu: paragraf kartları, ses denemeleri ve proje ayarları" width="100%" />
+</p>
+
 > [!NOTE]
 > EMA Studio, EMA Lightning **için** geliştirilmiş bağımsız bir topluluk projesidir. Model **Canberk Aslan** ([@canberkkkkkk](https://huggingface.co/canberkkkkkk)) tarafından geliştirildi ve Apache 2.0 lisansıyla yayımlandı. Bkz. [Teşekkürler](#teşekkürler).
 

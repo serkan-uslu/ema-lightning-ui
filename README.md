@@ -12,6 +12,10 @@ Voice long texts paragraph by paragraph, keep every take, export WAV/ZIP and bui
 
 </div>
 
+<p align="center">
+  <img src="docs/images/screenshot-en.webp" alt="EMA Studio audio studio: paragraph cards, takes and project settings" width="100%" />
+</p>
+
 > [!NOTE]
 > EMA Studio is an independent community project built **for** EMA Lightning. The model is created by **Canberk Aslan** ([@canberkkkkkk](https://huggingface.co/canberkkkkkk)) and released under Apache 2.0. See [Acknowledgements](#acknowledgements).
 
