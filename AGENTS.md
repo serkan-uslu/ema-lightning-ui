@@ -8,7 +8,7 @@ Proje çalışma alanı: http://127.0.0.1:3210/projects/bdd7c139-2b81-4fc5-9e28-
 GitHub deposu: https://github.com/serkan-uslu/ema-lightning-ui
 Depo rolü: Ana depo
 GitHub Projects panosu: https://github.com/users/serkan-uslu/projects/9
-Yönetilen yapı sürümü: 13
+Yönetilen yapı sürümü: 16
 
 Bu blok Project Managment tarafından yönetilir ve eşitlenir; içini düzenleme. Depoya özel talimatları bloğun dışına yaz. Proje tanımı, kararlar ve geliştirme geçmişi bu dosyada değil, Project Managment veritabanındadır.
 
